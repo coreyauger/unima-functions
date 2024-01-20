@@ -67,7 +67,7 @@ export default async ({ req, res, log, error }: Context) => {
           Query.equal("user_key",userId)
         ]
       );
-      log(`documents: ${documents}`);
+      log(`documents: ${JSON.stringify(documents)}`);
       const program = await db.getDocument(
         process.env.APPWRITE_DATABASE_ID!,
         "program",
