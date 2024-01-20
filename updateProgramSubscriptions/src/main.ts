@@ -53,6 +53,7 @@ export default async ({ req, res, log, error }: Context) => {
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`);      
 
+      log(`api key: ${process.env.APPWRITE_API_KEY}`)
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
           .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
@@ -97,8 +98,8 @@ export default async ({ req, res, log, error }: Context) => {
               "program": [program]
             },
             [
-              Permission.read(Role.users()),                  // Anyone can view this document
-              Permission.update(Role.team("admin")),        // Admins can update this document
+              Permission.read(Role.users()),        
+              Permission.update(Role.team("admin")),
               Permission.delete(Role.team("admin")),
               Permission.delete(Role.user(userId)),
               Permission.update(Role.user(userId)),            
