@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Query } from 'node-appwrite';
+import { Client, Account, Databases, Query, ID, Permission, Role } from 'node-appwrite';
 
 function throwIfMissing(obj: any, keys: string[]): void {
   const missing: string[] = [];
@@ -88,6 +88,23 @@ export default async ({ req, res, log, error }: Context) => {
         )*/
       }else{
         log(`create`);
+        const subscription = await db.createDocument(
+            process.env.APPWRITE_DATABASE_ID!,
+            "subscription",
+            ID.unique(),
+            {
+              "user_key": userId,
+              "program": [program]
+            },
+            [
+              Permission.read(Role.users()),                  // Anyone can view this document
+              Permission.update(Role.team("admin")),        // Admins can update this document
+              Permission.delete(Role.team("admin")),
+              Permission.delete(Role.user(userId)),
+              Permission.update(Role.user(userId)),            
+          ]
+        );
+        res.send(subscription.$id);
       }
 
      
