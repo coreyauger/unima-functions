@@ -74,18 +74,21 @@ export default async ({ req, res, log, error }: Context) => {
         programId
       );
       log(`program: ${JSON.stringify(program)}`)
-      if(documents.length){                
+      if(documents.length){     
         log(`update`);
-        /*db.updateDocument(
+        const subscription = documents[0];               
+        const updatedPrograms = [...(subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId), programId]
+        log(`updatedPrograms: ${updatedPrograms}`);
+        await db.updateDocument(
           process.env.APPWRITE_DATABASE_ID!,
-        "subscription",
-        {
-          ...document.
-        }
-        [
-          Query.equal("user_key",userId )
-        ]
-        )*/
+          "subscription",
+          subscription.$id,
+          {
+            "user_key": userId,
+            "program": updatedPrograms
+          }        
+        );
+        res.send(subscription.$id);
       }else{
         log(`create`);
         const subscription = await db.createDocument(
