@@ -67,51 +67,63 @@ export default async ({ req, res, log, error }: Context) => {
           Query.equal("user_key",userId)
         ]
       );
-      log(`documents: ${JSON.stringify(documents)}`);
-      const program = await db.getDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        "program",
-        programId
-      );
-      log(`program: ${JSON.stringify(program)}`)
-      if(documents.length){     
-        log(`update`);
-        const subscription = documents[0];               
-        const updatedPrograms = [...(subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId), programId]
-        log(`updatedPrograms: ${updatedPrograms}`);
-        await db.updateDocument(
-          process.env.APPWRITE_DATABASE_ID!,
-          "subscription",
-          subscription.$id,
-          {
-            "user_key": userId,
-            "program": updatedPrograms
-          }        
-        );
-        return res.send(subscription.$id);
-      }else{
-        log(`create`);
-        const subscription = await db.createDocument(
+      if (req.method === 'POST') {
+        if(documents.length){     
+          log(`update`);
+          const subscription = documents[0];               
+          const updatedPrograms = [...(subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId), programId]
+          log(`updatedPrograms: ${updatedPrograms}`);
+          await db.updateDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "subscription",
-            ID.unique(),
+            subscription.$id,
             {
               "user_key": userId,
-              "program": [program.$id]
-            },
-            [
-              Permission.read(Role.users()),        
-              Permission.update(Role.team("admin")),
-              Permission.delete(Role.team("admin")),
-              Permission.delete(Role.user(userId)),
-              Permission.update(Role.user(userId)),            
-          ]
-        );
-        return res.send(subscription.$id);
+              "program": updatedPrograms
+            }        
+          );
+          return res.send(subscription.$id);
+        }else{
+          log(`create`);
+          const subscription = await db.createDocument(
+              process.env.APPWRITE_DATABASE_ID!,
+              "subscription",
+              ID.unique(),
+              {
+                "user_key": userId,
+                "program": [programId]
+              },
+              [
+                Permission.read(Role.users()),        
+                Permission.update(Role.team("admin")),
+                Permission.delete(Role.team("admin")),
+                Permission.delete(Role.user(userId)),
+                Permission.update(Role.user(userId)),            
+            ]
+          );
+          return res.send(subscription.$id);
+        }
       }
-
-     
-
+      if (req.method === 'DELETE') {
+        if(documents.length){
+          log(`delete`);
+          const subscription = documents[0];               
+          const updatedPrograms = (subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId)
+          log(`updatedPrograms: ${updatedPrograms}`);
+          await db.updateDocument(
+            process.env.APPWRITE_DATABASE_ID!,
+            "subscription",
+            subscription.$id,
+            {
+              "user_key": userId,
+              "program": updatedPrograms
+            }        
+          );
+          return res.send(subscription.$id);
+        }else{
+          throw Error("DELETE called on a document that does not exist");
+        }
+      }
       // `res.json()` is a handy helper for sending JSON
       // return res.json({
       //   motto: 'Build like a team of hundreds_',
