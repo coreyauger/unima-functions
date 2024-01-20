@@ -34,6 +34,7 @@ export default async ({ req, res, log, error }: Context) => {
         // `res.send()` dispatches a string back to the client
         return res.error('expected POST, DELETE');
       }
+      log(req.body);
       const jwtToken = req.body.jwtToken;
       if(!jwtToken)throw new Error("No JWT token in request body");
       const programId = req.body.programId;
