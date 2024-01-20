@@ -39,6 +39,8 @@ export default async ({ req, res, log, error }: Context) => {
       log(jsonPayload);
       const jwtToken = jsonPayload.jwtToken;      
       if(!jwtToken)throw new Error("No JWT token in request body");
+      const programId = jsonPayload.programId;
+      if(!programId)throw new Error("No programId in request body");
       
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
@@ -49,10 +51,7 @@ export default async ({ req, res, log, error }: Context) => {
 
       const userId = (await userAccount.get()).$id;
       if(!userId)throw new Error("No user found from JWT token");
-      log(`got userId: ${userId}`);
-
-      const programId = jsonPayload.programId;
-      if(!programId)throw new Error("No programId in request body");
+      log(`got userId: ${userId}`);      
 
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
