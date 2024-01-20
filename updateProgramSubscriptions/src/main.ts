@@ -94,7 +94,7 @@ export default async ({ req, res, log, error }: Context) => {
             ID.unique(),
             {
               "user_key": userId,
-              "program": [program]
+              "program": [program.$id]
             },
             [
               Permission.read(Role.users()),        
