@@ -98,6 +98,6 @@ export default async ({ req, res, log, error }: Context) => {
       });
   }catch(e:any) {
     error(e);
-    res.error(e.message);
+    throw e;
   }
 };
