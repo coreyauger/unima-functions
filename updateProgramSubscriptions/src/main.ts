@@ -53,7 +53,6 @@ export default async ({ req, res, log, error }: Context) => {
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`);      
 
-      log(`api key: ${process.env.APPWRITE_API_KEY}`)
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
           .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
@@ -65,7 +64,7 @@ export default async ({ req, res, log, error }: Context) => {
         process.env.APPWRITE_DATABASE_ID!,
         "subscription",
         [
-          Query.equal("user_key",userId )
+          Query.equal("user_key",userId)
         ]
       );
       log(`documents: ${documents}`);
