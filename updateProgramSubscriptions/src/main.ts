@@ -35,11 +35,11 @@ export default async ({ req, res, log, error }: Context) => {
         return res.error('expected POST, DELETE');
       }
       log(req.body);
-      const jwtToken = req.body.jwtToken;
+      const jsonPayload = JSON.parse(req.body);
+      log(jsonPayload);
+      const jwtToken = jsonPayload.jwtToken;      
       if(!jwtToken)throw new Error("No JWT token in request body");
-      const programId = req.body.programId;
-      if(!programId)throw new Error("No programId in request body");
-
+      
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
         .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
@@ -50,6 +50,9 @@ export default async ({ req, res, log, error }: Context) => {
       const userId = (await userAccount.get()).$id;
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`);
+
+      const programId = jsonPayload.programId;
+      if(!programId)throw new Error("No programId in request body");
 
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
