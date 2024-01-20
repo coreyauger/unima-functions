@@ -73,7 +73,7 @@ export default async ({ req, res, log, error }: Context) => {
         "program",
         programId
       );
-      log(`program: ${program}`)
+      log(`program: ${JSON.stringify(program)}`)
       if(documents.length){                
         log(`update`);
         /*db.updateDocument(
