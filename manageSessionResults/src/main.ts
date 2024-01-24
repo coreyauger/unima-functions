@@ -84,7 +84,7 @@ export default async ({ req, res, log, error }: Context) => {
                 Permission.update(Role.user(userId)),            
             ]
           );
-          log("sessionResult: " + sessionResult);
+          log("sessionResult: " + JSON.stringify(sessionResult));
           return res.send(sessionResult.$id);
       }
       if (req.method === 'POST') {
