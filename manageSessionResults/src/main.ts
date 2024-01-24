@@ -71,8 +71,8 @@ export default async ({ req, res, log, error }: Context) => {
               {
                 "user_key": userId,
                 "session_key": sessionId,
-                "session": [sessionId],
-                "profile": [userId],
+                "session": sessionId,
+                "profile": userId,
                 "program_key": programId,
                 "start_time_ms": Date.now(),
               },
