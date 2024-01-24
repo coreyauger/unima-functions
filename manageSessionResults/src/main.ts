@@ -36,7 +36,6 @@ export default async ({ req, res, log, error }: Context) => {
       }
       log(req.body);
       const jsonPayload = JSON.parse(req.body);
-      log(jsonPayload);
       const jwtToken = jsonPayload.jwtToken;      
       if(!jwtToken)throw new Error("No JWT token in request body");
       
@@ -85,6 +84,7 @@ export default async ({ req, res, log, error }: Context) => {
                 Permission.update(Role.user(userId)),            
             ]
           );
+          log("sessionResult: " + sessionResult);
           return res.send(sessionResult.$id);
       }
       if (req.method === 'POST') {
