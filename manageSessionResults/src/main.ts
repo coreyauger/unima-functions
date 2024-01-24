@@ -39,8 +39,7 @@ export default async ({ req, res, log, error }: Context) => {
       log(jsonPayload);
       const jwtToken = jsonPayload.jwtToken;      
       if(!jwtToken)throw new Error("No JWT token in request body");
-      const programId = jsonPayload.programId;
-      if(!programId)throw new Error("No programId in request body");
+      
       
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
@@ -60,38 +59,23 @@ export default async ({ req, res, log, error }: Context) => {
 
       const db = new Databases(client);
 
-      const {documents} = await db.listDocuments(
-        process.env.APPWRITE_DATABASE_ID!,
-        "subscription",
-        [
-          Query.equal("user_key",userId)
-        ]
-      );
-      if (req.method === 'POST') {
-        if(documents.length){     
-          log(`update`);
-          const subscription = documents[0];               
-          const updatedPrograms = [...(subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId), programId]
-          log(`updatedPrograms: ${updatedPrograms}`);
-          await db.updateDocument(
-            process.env.APPWRITE_DATABASE_ID!,
-            "subscription",
-            subscription.$id,
-            {
-              "user_key": userId,
-              "program": updatedPrograms
-            }        
-          );
-          return res.send(subscription.$id);
-        }else{
-          log(`create`);
-          const subscription = await db.createDocument(
+      if (req.method === 'PUT') {        
+        log(`create`);
+        const programId = jsonPayload.programId;
+        if(!programId)throw new Error("No programId in request body");
+        const sessionId = jsonPayload.sessionId;
+        if(!sessionId)throw new Error("No sessionId in request body");
+        const sessionResult = await db.createDocument(
               process.env.APPWRITE_DATABASE_ID!,
-              "subscription",
+              "session_result",
               ID.unique(),
               {
                 "user_key": userId,
-                "program": [programId]
+                "session_key": sessionId,
+                "session": sessionId,
+                "profile": userId,
+                "program_key": programId,
+                "start_time_ms": Date.now(),
               },
               [
                 Permission.read(Role.users()),        
@@ -101,28 +85,35 @@ export default async ({ req, res, log, error }: Context) => {
                 Permission.update(Role.user(userId)),            
             ]
           );
-          return res.send(subscription.$id);
+          return res.send(sessionResult.$id);
+      }
+      if (req.method === 'POST') {
+        const sessionResultId = jsonPayload.sessionResultId;
+        if(!sessionResultId)throw new Error("No sessionResultId in request body");
+        const document = await db.getDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "session_result",
+          sessionResultId,
+          [
+            Query.equal("$id",userId)
+          ]
+        );
+        if(!document){
+          throw Error("No session result found");
         }
+        log(`update`);
+        const sessionResult = await db.updateDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "session_result",
+          sessionResultId,
+          {
+            "end_time_ms": Date.now(),           
+          }        
+        );
+        return res.send(sessionResult.$id);               
       }
       if (req.method === 'DELETE') {
-        if(documents.length){
-          log(`delete`);
-          const subscription = documents[0];               
-          const updatedPrograms = (subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId)
-          log(`updatedPrograms: ${updatedPrograms}`);
-          await db.updateDocument(
-            process.env.APPWRITE_DATABASE_ID!,
-            "subscription",
-            subscription.$id,
-            {
-              "user_key": userId,
-              "program": updatedPrograms
-            }        
-          );
-          return res.send(subscription.$id);
-        }else{
-          throw Error("DELETE called on a document that does not exist");
-        }
+        // TODO: ..
       }
       // `res.json()` is a handy helper for sending JSON
       // return res.json({
