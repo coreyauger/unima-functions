@@ -46,7 +46,8 @@ export default async ({ req, res, log, error }: Context) => {
         "weight_kg": jsonPayload.weightKg,
         "height_cm": jsonPayload.heightCm,
         "occupation": jsonPayload.occupation,
-        "avatar_img": jsonPayload.avatarImg,
+        "avatar_img_id": jsonPayload.avatarImgId,
+        "user_type": ["USER"]
       }      
       
       const userClient = new Client()
