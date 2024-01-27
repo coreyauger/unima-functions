@@ -37,18 +37,7 @@ export default async ({ req, res, log, error }: Context) => {
       log(req.body);
       const jsonPayload = JSON.parse(req.body);
       const jwtToken = jsonPayload.jwtToken;      
-      if(!jwtToken)throw new Error("No JWT token in request body");
-
-      const updates = {
-        "name": jsonPayload.name,
-        "birthdate": jsonPayload.birthDate,
-        "sex": jsonPayload.sex?.toUpperCase(),
-        "weight_kg": jsonPayload.weightKg,
-        "height_cm": jsonPayload.heightCm,
-        "occupation": jsonPayload.occupation,
-        "avatar_img_id": jsonPayload.avatarImgId,
-        "user_type": ["USER"]
-      }      
+      if(!jwtToken)throw new Error("No JWT token in request body");          
       
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
@@ -60,6 +49,18 @@ export default async ({ req, res, log, error }: Context) => {
       const userId = (await userAccount.get()).$id;
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`);      
+
+      const updates = {
+        "name": jsonPayload.name,
+        "birthdate": jsonPayload.birthDate,
+        "sex": jsonPayload.sex?.toUpperCase(),
+        "weight_kg": jsonPayload.weightKg,
+        "height_cm": jsonPayload.heightCm,
+        "occupation": jsonPayload.occupation,
+        "avatar_img_id": jsonPayload.avatarImgId,
+        "user_type": ["USER"],
+        "user_id": userId,
+      }  
 
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
