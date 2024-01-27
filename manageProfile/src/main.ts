@@ -61,6 +61,7 @@ export default async ({ req, res, log, error }: Context) => {
         "user_type": ["USER"],
         "user_id": userId,
       }  
+      log(`update profile: ${JSON.stringify(updates)}`);
 
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
