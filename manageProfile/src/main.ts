@@ -75,15 +75,16 @@ export default async ({ req, res, log, error }: Context) => {
         ).catch((r) => undefined);
       if(profile?.$id){
         // update the profile
-        return await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
+        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "profile",
           userId, {
             ...profile,
             ...updates,
           }, 
-          [Query.equal("$id",userId)]);                   
+          [Query.equal("$id",userId)]);        
+          return res.send(doc.$id);               
       } else {
-        return await db.createDocument(
+        const doc = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "profile",
           userId,
@@ -94,6 +95,7 @@ export default async ({ req, res, log, error }: Context) => {
             Permission.delete(Role.team("admin")),
             Permission.update(Role.user(userId)),            
         ]);
+        return res.send(doc.$id);
       }
   }catch(e:any) {
     error(e);
