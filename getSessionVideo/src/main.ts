@@ -56,7 +56,7 @@ export default async ({ req, res, log, error }: Context) => {
       if(!videoId)throw new Error("No video ID was in the request body.");   
 
       // UNIX timestamp when the vidoe link will expire (default to 120 minutes)
-      const timestamp = (Date.now() + (120 * 60 * 1000)) / 1000;  // UNIX POSIX is in seconds not ms.
+      const timestamp = Math.round( (Date.now() + (120 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
       const hash = sha256(process.env.BUNNY_API_KEY! + videoId + timestamp);
       return res.json({
         hash,
