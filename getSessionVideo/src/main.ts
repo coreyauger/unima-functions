@@ -59,7 +59,11 @@ export default async ({ req, res, log, error }: Context) => {
       const timestamp = Math.round( (Date.now() + (120 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
       log("Bunny: "+process.env.BUNNY_API_KEY!);
       log("Video: "+videoId);
-      log("timestamp: "+process.env.BUNNY_API_KEY!);
+      log("timestamp: "+timestamp);
+
+      const test = sha256("4742a81b-bf15-42fe-8b1c-8fcb9024c550" + "32d140e2-e4f4-4eec-9d53-20371e9be607" + 1623440202);
+      log("titestmestamp: "+test);
+
       const hash = sha256(process.env.BUNNY_API_KEY! + videoId + timestamp);
       return res.json({
         hash,
