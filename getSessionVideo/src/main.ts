@@ -57,6 +57,9 @@ export default async ({ req, res, log, error }: Context) => {
 
       // UNIX timestamp when the vidoe link will expire (default to 120 minutes)
       const timestamp = Math.round( (Date.now() + (120 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
+      log("Bunny: "+process.env.BUNNY_API_KEY!);
+      log("Video: "+videoId);
+      log("timestamp: "+process.env.BUNNY_API_KEY!);
       const hash = sha256(process.env.BUNNY_API_KEY! + videoId + timestamp);
       return res.json({
         hash,
