@@ -68,9 +68,9 @@ export default async ({ req, res, log, error }: Context) => {
 
       const db = new Databases(client);
       const profile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
-        "session_result",
+        "profile",
         userId
-        );
+        ).catch((r) => undefined);
       if(profile?.$id){
         // update the profile
         return await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
