@@ -101,7 +101,7 @@ export default async ({ req, res, log, error }: Context) => {
         ]);
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const createResult = await streamClient.user(userId).getOrCreate(updates);
-        log(`createResult: ${JSON.stringify(createResult)}`);
+        log(`createResult: ${JSON.stringify(createResult.data)}`);
         return res.send(doc.$id);
       }
   }catch(e:any) {
