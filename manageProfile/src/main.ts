@@ -1,4 +1,5 @@
 import { Client, Account, Databases, Query, Permission, Role } from 'node-appwrite';
+import { connect } from 'getstream';
 
 function throwIfMissing(obj: any, keys: string[]): void {
   const missing: string[] = [];
@@ -26,6 +27,9 @@ export default async ({ req, res, log, error }: Context) => {
     'APPWRITE_API_KEY',
     'APPWRITE_FUNCTION_PROJECT_ID',
     'APPWRITE_DATABASE_ID',
+    'STREAM_API_KEY',
+    'STREAM_API_SECRET',
+    'STREAM_APP_ID',
   ]);
     try{
        // The `req` object contains the request data
@@ -95,6 +99,9 @@ export default async ({ req, res, log, error }: Context) => {
             Permission.delete(Role.team("admin")),
             Permission.update(Role.user(userId)),            
         ]);
+        const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+        const createResult = await streamClient.user(userId).getOrCreate(updates);
+        log(`createResult: ${JSON.stringify(createResult)}`);
         return res.send(doc.$id);
       }
   }catch(e:any) {
