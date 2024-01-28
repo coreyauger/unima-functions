@@ -58,10 +58,7 @@ export default async ({ req, res, log, error }: Context) => {
       const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       const userToken = client.createUserToken(userId);
       
-      return res.json({
-        userId,
-        userToken,
-      });
+      return res.send(userToken);
   }catch(e:any) {
     error(e);
     throw e;
