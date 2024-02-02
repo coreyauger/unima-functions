@@ -100,8 +100,8 @@ export default async ({ req, res, log, error }: Context) => {
             Permission.update(Role.user(userId)),            
         ]);
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-        log(`process.env.STREAM_API_SECRET: ${process.env.STREAM_API_SECRET}`);
-        await streamClient.user(userId).getOrCreate(updates);
+        const user = await streamClient.user(userId).getOrCreate(updates);
+        await user.update(updates);
         log("We have a stream result");
         //log(`createResult data: ${createResult.data}`);      
         return res.send(doc.$id);
