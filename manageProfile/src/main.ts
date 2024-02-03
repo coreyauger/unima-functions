@@ -54,18 +54,23 @@ export default async ({ req, res, log, error }: Context) => {
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`);      
 
-      const updates = {
+      const updatesProfile = {
         "name": jsonPayload.name,
+        "handle": jsonPayload.handle,
+        "avatar_img_id": jsonPayload.avatarImgId,
+        "cover_img_id": jsonPayload.coverImgId,
+        "user_type": "MEMBER",
+        "user_id": userId,
+      }  
+      const updatesUserDetails = {
+        "profile_key": userId,
         "birthdate": jsonPayload.birthDate,
         "sex": jsonPayload.sex?.toUpperCase(),
         "weight_kg": jsonPayload.weightKg,
         "height_cm": jsonPayload.heightCm,
-        "occupation": jsonPayload.occupation,
-        "avatar_img_id": jsonPayload.avatarImgId,
-        "user_type": ["USER"],
-        "user_id": userId,
-      }  
-      log(`update profile: ${JSON.stringify(updates)}`);
+        "occupation": jsonPayload.occupation,        
+      }
+      log(`update profile: ${JSON.stringify(updatesProfile)}`);
 
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
@@ -83,25 +88,38 @@ export default async ({ req, res, log, error }: Context) => {
           "profile",
           userId, {
             ...profile,
-            ...updates,
+            ...updatesProfile,
           }, 
-          [Query.equal("$id",userId)]);        
+          [Query.equal("$id",userId)]);
+          await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
+            "user_details",
+            userId, {
+              ...updatesUserDetails,
+            }, 
+            [Query.equal("$id",userId)]);      
+          
           return res.send(doc.$id);               
       } else {
         const doc = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "profile",
           userId,
-          updates,
+          updatesProfile,
           [
             Permission.read(Role.users()),        
             Permission.update(Role.team("admin")),
             Permission.delete(Role.team("admin")),
             Permission.update(Role.user(userId)),            
         ]);
+        await db.createDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "user_details",
+          userId,
+          updatesUserDetails,
+        );
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-        const user = await streamClient.user(userId).getOrCreate(updates);
-        await user.update(updates);
+        const user = await streamClient.user(userId).getOrCreate(updatesProfile);
+        await user.update(updatesProfile);
         log("We have a stream result");
         //log(`createResult data: ${createResult.data}`);      
         return res.send(doc.$id);
