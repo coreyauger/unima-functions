@@ -130,10 +130,12 @@ export default async ({ req, res, log, error }: Context) => {
         // Add an activity to the feed
         await sessionFeed.addActivity(activity);
 
-        // - Post the result to the users feed
+        // - Post the result to the users feed (and timeline)
         const userFeed = client.feed('user', userId);
         await userFeed.addActivity(activity);
-        log("posting activity to feed: [session_activity, user]");
+        const timelineFeed = client.feed('timeline', userId);
+        await timelineFeed.addActivity(activity);
+        log("posting activity to feed: [session_activity, user, timeline]");
         log("activity: " + JSON.stringify(activity));
         return res.send(sessionResult.$id);               
       }
