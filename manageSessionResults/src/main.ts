@@ -132,7 +132,8 @@ export default async ({ req, res, log, error }: Context) => {
         // - Post the result to the users feed
         const userFeed = client.feed('user', userId);
         await userFeed.addActivity(activity);
-
+        log("posting activity to feed: [session_activity, user]");
+        log("activity: " + JSON.stringify(activity));
         return res.send(sessionResult.$id);               
       }
       if (req.method === 'DELETE') {
