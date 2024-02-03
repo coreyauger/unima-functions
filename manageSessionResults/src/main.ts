@@ -114,6 +114,7 @@ export default async ({ req, res, log, error }: Context) => {
             "end_time_ms": Date.now(),           
           }        
         );
+        log("sessionResult: " + JSON.stringify(sessionResult));
         // get the session..
         const session = await db.getDocument(
           process.env.APPWRITE_DATABASE_ID!,
