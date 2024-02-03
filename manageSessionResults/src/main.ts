@@ -119,7 +119,7 @@ export default async ({ req, res, log, error }: Context) => {
         const session = await db.getDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "session",
-          (sessionResult as any).session_id      
+          (sessionResult as any).session_key     
         );
         
         // - Also post the result to the sessions timeline
