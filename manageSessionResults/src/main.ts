@@ -1,4 +1,5 @@
 import { Client, Account, Databases, Query, ID, Permission, Role } from 'node-appwrite';
+import { connect } from 'getstream';
 
 function throwIfMissing(obj: any, keys: string[]): void {
   const missing: string[] = [];
@@ -26,6 +27,9 @@ export default async ({ req, res, log, error }: Context) => {
     'APPWRITE_API_KEY',
     'APPWRITE_FUNCTION_PROJECT_ID',
     'APPWRITE_DATABASE_ID',
+    'STREAM_API_KEY',
+    'STREAM_API_SECRET',
+    'STREAM_APP_ID',
   ]);
     try{
        // The `req` object contains the request data
@@ -110,18 +114,30 @@ export default async ({ req, res, log, error }: Context) => {
             "end_time_ms": Date.now(),           
           }        
         );
+        // get the session..
+        const session = await db.getDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "session",
+          (sessionResult as any).session_id      
+        );
+        
+        // - Also post the result to the sessions timeline
+        const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+        const sessionFeed = client.feed('session_activity', sessionResultId);
+        // Create an activity object
+        const activity = { actor: `User:${userId}`, verb: 'finished', object: `SessionResult:${(sessionResult as any).session_key}`, foreign_id:(sessionResult as any).session_key, sessionResult, session };
+        // Add an activity to the feed
+        await sessionFeed.addActivity(activity);
+
+        // - Post the result to the users feed
+        const userFeed = client.feed('user', userId);
+        await userFeed.addActivity(activity);
+
         return res.send(sessionResult.$id);               
       }
       if (req.method === 'DELETE') {
         // TODO: ..
-      }
-      // `res.json()` is a handy helper for sending JSON
-      // return res.json({
-      //   motto: 'Build like a team of hundreds_',
-      //   learn: 'https://appwrite.io/docs',
-      //   connect: 'https://appwrite.io/discord',
-      //   getInspired: 'https://builtwith.appwrite.io',
-      // });
+      }    
   }catch(e:any) {
     error(e);
     throw e;
