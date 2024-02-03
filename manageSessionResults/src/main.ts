@@ -97,13 +97,13 @@ export default async ({ req, res, log, error }: Context) => {
         const document = await db.getDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "session_result",
-          sessionResultId,
-          [
-            Query.equal("$id",userId)
-          ]
+          sessionResultId         
         );
         if(!document){
           throw Error("No session result found");
+        }
+        if((document as any).user_key !== userId){
+          throw Error("This session result is not owned by the user: " + userId);
         }
         log(`update`);
         const sessionResult = await db.updateDocument(
