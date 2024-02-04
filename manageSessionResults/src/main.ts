@@ -133,7 +133,7 @@ export default async ({ req, res, log, error }: Context) => {
         // - Post result to the program feed and program aggregation feed.
         const programAggregated = client.feed('program_aggregated', programId);
         await programAggregated.addActivity(activity);
-        const programActivity = client.feed('prograprogram_activitym_aggregated', programId);
+        const programActivity = client.feed('program_activity', programId);
         await programActivity.addActivity(activity);
         log("posting activity to feed: [session_activity, user, timeline, program_aggregated, program_activity]");
         log("activity: " + JSON.stringify(activity));
