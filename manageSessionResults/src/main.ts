@@ -128,7 +128,14 @@ export default async ({ req, res, log, error }: Context) => {
         await userFeed.addActivity(activity);
         const timelineFeed = client.feed('timeline', userId);
         await timelineFeed.addActivity(activity);
-        log("posting activity to feed: [session_activity, user, timeline]");
+
+        const programId = (sessionResult as any).program_key;
+        // - Post result to the program feed and program aggregation feed.
+        const programAggregated = client.feed('program_aggregated', programId);
+        await programAggregated.addActivity(activity);
+        const programActivity = client.feed('prograprogram_activitym_aggregated', programId);
+        await programActivity.addActivity(activity);
+        log("posting activity to feed: [session_activity, user, timeline, program_aggregated, program_activity]");
         log("activity: " + JSON.stringify(activity));
         return res.send(sessionResult.$id);               
       }
