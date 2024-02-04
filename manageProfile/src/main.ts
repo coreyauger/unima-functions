@@ -120,6 +120,9 @@ export default async ({ req, res, log, error }: Context) => {
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const user = await streamClient.user(userId).getOrCreate(updatesProfile);
         await user.update(updatesProfile);
+        // we want to follow our own feed in the timeline..
+        const timelineFeed = streamClient.feed('timeline', userId);
+        timelineFeed.follow("user", userId);
         log("We have a stream result");
         //log(`createResult data: ${createResult.data}`);      
         return res.send(doc.$id);
