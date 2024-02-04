@@ -1,4 +1,5 @@
 import { Client, Account, Databases, Query, ID, Permission, Role } from 'node-appwrite';
+import { connect } from 'getstream';
 
 function throwIfMissing(obj: any, keys: string[]): void {
   const missing: string[] = [];
@@ -26,6 +27,9 @@ export default async ({ req, res, log, error }: Context) => {
     'APPWRITE_API_KEY',
     'APPWRITE_FUNCTION_PROJECT_ID',
     'APPWRITE_DATABASE_ID',
+    'STREAM_API_KEY',
+    'STREAM_API_SECRET',
+    'STREAM_APP_ID',
   ]);
     try{
        // The `req` object contains the request data
@@ -59,6 +63,8 @@ export default async ({ req, res, log, error }: Context) => {
           .setKey(process.env.APPWRITE_API_KEY!);
 
       const db = new Databases(client);
+      const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+      const userTimeline = await streamClient.feed("timeline", userId);
 
       const {documents} = await db.listDocuments(
         process.env.APPWRITE_DATABASE_ID!,
@@ -82,6 +88,7 @@ export default async ({ req, res, log, error }: Context) => {
               "program": updatedPrograms
             }        
           );
+          await userTimeline.follow("user", programId);
           return res.send(subscription.$id);
         }else{
           log(`create`);
@@ -101,6 +108,7 @@ export default async ({ req, res, log, error }: Context) => {
                 Permission.update(Role.user(userId)),            
             ]
           );
+          await userTimeline.follow("user", programId);
           return res.send(subscription.$id);
         }
       }
@@ -119,6 +127,7 @@ export default async ({ req, res, log, error }: Context) => {
               "program": updatedPrograms
             }        
           );
+          await userTimeline.unfollow("user", programId);
           return res.send(subscription.$id);
         }else{
           throw Error("DELETE called on a document that does not exist");
