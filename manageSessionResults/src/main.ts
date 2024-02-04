@@ -119,7 +119,7 @@ export default async ({ req, res, log, error }: Context) => {
         const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const sessionFeed = client.feed('session_activity', sessionResultId);
         // Create an activity object
-        const activity = { actor: `User:${userId}`, verb: 'finished', object: `SessionResult:${(sessionResult as any).session_key}`, foreign_id:(sessionResult as any).session_key, time: sessionResult.$createdAt, extra_data: sessionResult };
+        const activity = { actor: `SU:${userId}`, verb: 'scored', object: `SessionResult:${(sessionResult as any).session_key}`, foreign_id:(sessionResult as any).session_key, time: sessionResult.$createdAt, extra_data: sessionResult };
         // Add an activity to the feed
         await sessionFeed.addActivity(activity);
 
