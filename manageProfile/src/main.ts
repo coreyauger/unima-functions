@@ -57,17 +57,16 @@ export default async ({ req, res, log, error }: Context) => {
       const updatesProfile = {
         "name": jsonPayload.name,
         "handle": jsonPayload.handle,
-        "avatar_img_id": jsonPayload.avatarImgId,
-        "cover_img_id": jsonPayload.coverImgId,
-        "user_type": "MEMBER",
-        "user_id": userId,
+        "avatarImgId": jsonPayload.avatarImgId,
+        "coverImgId": jsonPayload.coverImgId,
+        "userType": "MEMBER",        
       }  
       const updatesUserDetails = {
-        "profile_key": userId,
+        "profileKey": userId,
         "birthdate": jsonPayload.birthDate,
         "sex": jsonPayload.sex?.toUpperCase(),
-        "weight_kg": jsonPayload.weightKg,
-        "height_cm": jsonPayload.heightCm,
+        "weightKg": jsonPayload.weightKg,
+        "heightCm": jsonPayload.heightCm,
         "occupation": jsonPayload.occupation,        
       }
       log(`update profile: ${JSON.stringify(updatesProfile)}`);

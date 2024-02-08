@@ -73,12 +73,12 @@ export default async ({ req, res, log, error }: Context) => {
               "session_result",
               ID.unique(),
               {
-                "user_key": userId,
-                "session_key": sessionId,
+                "userKey": userId,
+                "sessionKey": sessionId,
                 "session": sessionId,
                 "profile": userId,
-                "program_key": programId,
-                "start_time_ms": Date.now(),
+                "programKey": programId,
+                "startTimeMs": Date.now(),
               },
               [
                 Permission.read(Role.users()),        
@@ -111,7 +111,7 @@ export default async ({ req, res, log, error }: Context) => {
           "session_result",
           sessionResultId,
           {
-            "end_time_ms": Date.now(),           
+            "endTimeMs": Date.now(),           
           }        
         );
         log("sessionResult: " + JSON.stringify(sessionResult));        

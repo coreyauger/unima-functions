@@ -70,7 +70,7 @@ export default async ({ req, res, log, error }: Context) => {
         process.env.APPWRITE_DATABASE_ID!,
         "subscription",
         [
-          Query.equal("user_key",userId)
+          Query.equal("userKey",userId)
         ]
       );
       if (req.method === 'POST') {
@@ -84,7 +84,7 @@ export default async ({ req, res, log, error }: Context) => {
             "subscription",
             subscription.$id,
             {
-              "user_key": userId,
+              "userKey": userId,
               "program": updatedPrograms
             }        
           );
@@ -97,7 +97,7 @@ export default async ({ req, res, log, error }: Context) => {
               "subscription",
               ID.unique(),
               {
-                "user_key": userId,
+                "userKey": userId,
                 "program": [programId]
               },
               [
@@ -123,7 +123,7 @@ export default async ({ req, res, log, error }: Context) => {
             "subscription",
             subscription.$id,
             {
-              "user_key": userId,
+              "userKey": userId,
               "program": updatedPrograms
             }        
           );
