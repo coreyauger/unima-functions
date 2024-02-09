@@ -82,7 +82,7 @@ export default async ({ req, res, log, error }: Context) => {
           return res.json(doc);               
       } else {        
         const profileId = ID.unique();
-        log("Create a new program with id: " + profileId);
+        log("Create a new program with id: " + profileId + " data: " + JSON.stringify(update.profile));
         const profile = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "profile",
@@ -98,10 +98,10 @@ export default async ({ req, res, log, error }: Context) => {
         const program = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "program",
-          profileId,
+          profile.$id,
           {
             ...update,
-            profile: profileId,
+            profile: profile.$id,
           },
           [
             Permission.read(Role.users()),        
@@ -112,17 +112,17 @@ export default async ({ req, res, log, error }: Context) => {
         );
         log(`program: ${JSON.stringify(program)}`);
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-        const user = await streamClient.user(profileId).getOrCreate(update.profile);
-        await user.update(update.profile);
+        const user = await streamClient.user(profile.$id).getOrCreate(profile);
+        await user.update(profile);
         // we want to follow our own feed in the timeline..
-        const timelineFeed = streamClient.feed('timeline', profileId);
-        timelineFeed.follow("user", profileId);
+        const timelineFeed = streamClient.feed('timeline', profile.$id);
+        timelineFeed.follow("user", profile.$id);
         log("We have a stream result");
         //log(`createResult data: ${createResult.data}`);  
         const doc = await db.getDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "program",
-          profileId
+          program.$id
         );
         return res.json(doc);
       }
