@@ -82,7 +82,7 @@ export default async ({ req, res, log, error }: Context) => {
           return res.json(doc);               
       } else {        
         const profileId = ID.unique();
-        log("Create a new program with id: " + profileId + " data: " + JSON.stringify(update.profile));
+        log("Create a new program profile with data: " + JSON.stringify(update.profile));
         const profile = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "profile",
@@ -101,15 +101,14 @@ export default async ({ req, res, log, error }: Context) => {
           profile.$id,
           {
             ...update,
-            profile: profile.$id,
+            profile,
           },
           [
             Permission.read(Role.users()),        
             Permission.update(Role.team("admin")),
             Permission.delete(Role.team("admin")),
             Permission.update(Role.user(userId)),            
-        ]
-        );
+        ]);
         log(`program: ${JSON.stringify(program)}`);
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const user = await streamClient.user(profile.$id).getOrCreate(profile);
