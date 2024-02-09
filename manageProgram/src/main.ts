@@ -41,7 +41,8 @@ export default async ({ req, res, log, error }: Context) => {
       log(req.body);
       const jsonPayload = JSON.parse(req.body);
       const jwtToken = jsonPayload.jwtToken;      
-      if(!jwtToken)throw new Error("No JWT token in request body");          
+      if(!jwtToken)throw new Error("No JWT token in request body");
+      const update = jsonPayload.program;             
       
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
@@ -62,7 +63,7 @@ export default async ({ req, res, log, error }: Context) => {
       const db = new Databases(client);
       const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
         "program",
-        jsonPayload.$id
+        update.$id
         ).catch((r) => undefined);
       if(program?.$id){
         log("Found program, checking if ok to update: " + program?.$id);
@@ -70,7 +71,7 @@ export default async ({ req, res, log, error }: Context) => {
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "program",
           program?.$id, {
-            ...jsonPayload,
+            ...update,
             profile: (program as any).profile.$id, // Don't allow a profile id change
           });
           await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
@@ -86,7 +87,7 @@ export default async ({ req, res, log, error }: Context) => {
           process.env.APPWRITE_DATABASE_ID!,
           "profile",
           profileId,
-          jsonPayload.profile,
+          update.profile,
           [
             Permission.read(Role.users()),        
             Permission.update(Role.team("admin")),
@@ -99,7 +100,7 @@ export default async ({ req, res, log, error }: Context) => {
           "program",
           profileId,
           {
-            ...jsonPayload,
+            ...update,
             profile: profileId,
           },
           [
@@ -111,8 +112,8 @@ export default async ({ req, res, log, error }: Context) => {
         );
         log(`program: ${JSON.stringify(program)}`);
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-        const user = await streamClient.user(profileId).getOrCreate(jsonPayload.profile);
-        await user.update(jsonPayload.profile);
+        const user = await streamClient.user(profileId).getOrCreate(update.profile);
+        await user.update(update.profile);
         // we want to follow our own feed in the timeline..
         const timelineFeed = streamClient.feed('timeline', profileId);
         timelineFeed.follow("user", profileId);
