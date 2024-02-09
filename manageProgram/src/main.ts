@@ -101,7 +101,7 @@ export default async ({ req, res, log, error }: Context) => {
           profile.$id,
           {
             ...update,
-            profile,
+            profile: profile.$id,
           },
           [
             Permission.read(Role.users()),        
