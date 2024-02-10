@@ -72,6 +72,7 @@ export default async ({ req, res, log, error }: Context) => {
         log("About to create video");
         // create the video
         const url = `https://video.bunnycdn.com/library/${libraryId}/videos`;
+        log(process.env.BUNNY_API_KEY!);
         const options: RequestInit = {
           method: 'POST',
           headers: {
