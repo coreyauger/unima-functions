@@ -96,6 +96,7 @@ export default async ({ req, res, log, error }: Context) => {
           hash,
           timestamp,
           videoId: video.guid,
+          libraryId,
         });
       }
 
@@ -117,6 +118,7 @@ export default async ({ req, res, log, error }: Context) => {
           hash,
           timestamp,
           videoId,
+          libraryId,
         });
       }
 
