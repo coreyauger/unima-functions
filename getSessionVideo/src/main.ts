@@ -35,13 +35,7 @@ export default async ({ req, res, log, error }: Context) => {
     'APPWRITE_DATABASE_ID',
     'BUNNY_API_KEY'
   ]);
-    try{
-       // The `req` object contains the request data
-       if (req.method !== 'GET' || req.method !== 'PUT') {
-        // Send a response with the res object helpers
-        // `res.send()` dispatches a string back to the client
-        return res.error('expected GET, PUT method');
-      }
+    try{     
       log(req.body);
       const jsonPayload = JSON.parse(req.body);
       const jwtToken = jsonPayload.jwtToken;
@@ -122,6 +116,8 @@ export default async ({ req, res, log, error }: Context) => {
           timestamp,
         });
       }
+
+      return res.error("Function called with wrong METHOD");
   }catch(e:any) {
     error(e);
     throw e;
