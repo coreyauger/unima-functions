@@ -33,7 +33,8 @@ export default async ({ req, res, log, error }: Context) => {
     'APPWRITE_API_KEY',
     'APPWRITE_FUNCTION_PROJECT_ID',
     'APPWRITE_DATABASE_ID',
-    'BUNNY_API_KEY'
+    'BUNNY_API_KEY',
+    'BUNNY_STREAM_API_KEY',
   ]);
     try{     
       log(req.body);
@@ -106,14 +107,14 @@ export default async ({ req, res, log, error }: Context) => {
 
         // UNIX timestamp when the vidoe link will expire (default to 120 minutes)
         const timestamp = Math.round( (Date.now() + (120 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
-        log("Bunny: "+process.env.BUNNY_API_KEY!);
+        log("Bunny: "+process.env.BUNNY_STREAM_API_KEY!);
         log("Video: "+videoId);
         log("timestamp: "+timestamp);
 
-        const test = sha256("4742a81b-bf15-42fe-8b1c-8fcb9024c550" + "32d140e2-e4f4-4eec-9d53-20371e9be607" + timestamp);
-        log("titestmestamp: "+test);
+        //const test = sha256("4742a81b-bf15-42fe-8b1c-8fcb9024c550" + "32d140e2-e4f4-4eec-9d53-20371e9be607" + timestamp);
+        //log("titestmestamp: "+test);
 
-        const hash = sha256(process.env.BUNNY_API_KEY! + videoId + timestamp);
+        const hash = sha256(process.env.BUNNY_STREAM_API_KEY! + videoId + timestamp);
         return res.json({
           hash,
           timestamp,
