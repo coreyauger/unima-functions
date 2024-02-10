@@ -1,9 +1,11 @@
-import { Client, Account, Databases, Query, Permission, Role } from 'node-appwrite';
+import { Client, Account, Databases, Query, Permission, Role, Users } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 
 function sha256(content: string) {  
   return createHash('sha256').update(content).digest('hex')
 }
+
+const libraryId = "198142";
 
 function throwIfMissing(obj: any, keys: string[]): void {
   const missing: string[] = [];
@@ -35,10 +37,10 @@ export default async ({ req, res, log, error }: Context) => {
   ]);
     try{
        // The `req` object contains the request data
-       if (req.method !== 'GET') {
+       if (req.method !== 'GET' || req.method !== 'PUT') {
         // Send a response with the res object helpers
         // `res.send()` dispatches a string back to the client
-        return res.error('expected GET method');
+        return res.error('expected GET, PUT method');
       }
       log(req.body);
       const jsonPayload = JSON.parse(req.body);
@@ -50,25 +52,76 @@ export default async ({ req, res, log, error }: Context) => {
         .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
         .setJWT(jwtToken);
 
-      const userAccount = new Account(userClient);
+      const userAccount = new Account(userClient);                
 
-      const videoId = jsonPayload.videoId;
-      if(!videoId)throw new Error("No video ID was in the request body.");   
+      if(req.method == 'PUT'){
+        // check that we are an instructor for this course?
+        const programId = jsonPayload.programId;
+        if(!programId)throw new Error("No program ID was in the request body.");
+        const userId = (await userAccount.get()).$id;        
+        if(!userId)throw new Error("Could not resolve user from jwt.");
+        const title = jsonPayload.title;
+        if(!title)throw new Error("No title was in the request body.");
+       
+        const client = new Client()
+          .setEndpoint('https://cloud.appwrite.io/v1')
+          .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+          .setKey(process.env.APPWRITE_API_KEY!);
+        const db = new Databases(client)
+        const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+          "program",
+          programId);
+        log(`Got program: ${JSON.stringify(program)}`);
+        const instructor = (program as any).instructor.profile as [];
+        if(!instructor.find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);
 
-      // UNIX timestamp when the vidoe link will expire (default to 120 minutes)
-      const timestamp = Math.round( (Date.now() + (120 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
-      log("Bunny: "+process.env.BUNNY_API_KEY!);
-      log("Video: "+videoId);
-      log("timestamp: "+timestamp);
+        log("About to create video");
+        // create the video
+        const url = `https://video.bunnycdn.com/library/${libraryId}/videos`;
+        const options: RequestInit = {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/*+json',
+            AccessKey: process.env.BUNNY_API_KEY!
+          },
+          body: JSON.stringify({
+            title
+          })
+        };
+        const video = await fetch(url, options).then(res => res.json());
+        log(`Created video: ${JSON.stringify(video)}`);
 
-      const test = sha256("4742a81b-bf15-42fe-8b1c-8fcb9024c550" + "32d140e2-e4f4-4eec-9d53-20371e9be607" + 1623440202);
-      log("titestmestamp: "+test);
+        // Pass back the secure upload link
+        // UNIX timestamp when the vidoe link will expire (default to 1 day)
+        const timestamp = Math.round( (Date.now() + (24 * 60 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
+        //sha256(library_id + api_key + expiration_time + video_id)
+        const hash = sha256(libraryId + process.env.BUNNY_API_KEY! + timestamp + video.guid);
+        return res.json({
+          hash,
+          timestamp,
+        });
+      }
 
-      const hash = sha256(process.env.BUNNY_API_KEY! + videoId + timestamp);
-      return res.json({
-        hash,
-        timestamp,
-      });
+      if (req.method == 'GET') {      
+        const videoId = jsonPayload.videoId;
+        if(!videoId)throw new Error("No video ID was in the request body.");   
+
+        // UNIX timestamp when the vidoe link will expire (default to 120 minutes)
+        const timestamp = Math.round( (Date.now() + (120 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
+        log("Bunny: "+process.env.BUNNY_API_KEY!);
+        log("Video: "+videoId);
+        log("timestamp: "+timestamp);
+
+        const test = sha256("4742a81b-bf15-42fe-8b1c-8fcb9024c550" + "32d140e2-e4f4-4eec-9d53-20371e9be607" + timestamp);
+        log("titestmestamp: "+test);
+
+        const hash = sha256(process.env.BUNNY_API_KEY! + videoId + timestamp);
+        return res.json({
+          hash,
+          timestamp,
+        });
+      }
   }catch(e:any) {
     error(e);
     throw e;
