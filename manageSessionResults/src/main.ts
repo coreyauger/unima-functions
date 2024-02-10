@@ -102,7 +102,7 @@ export default async ({ req, res, log, error }: Context) => {
         if(!document){
           throw Error("No session result found");
         }
-        if((document as any).user_key !== userId){
+        if((document as any).userKey !== userId){
           throw Error("This session result is not owned by the user: " + userId);
         }
         log(`update`);
@@ -117,9 +117,9 @@ export default async ({ req, res, log, error }: Context) => {
         log("sessionResult: " + JSON.stringify(sessionResult));        
         // - Also post the result to the sessions timeline
         const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-        const sessionFeed = client.feed('session_activity', (sessionResult as any).session_key );
+        const sessionFeed = client.feed('session_activity', (sessionResult as any).sessionKey );
         // Create an activity object
-        const activity = { actor: `SU:${userId}`, verb: 'scored', object: `SessionResult:${(sessionResult as any).$id}`, foreign_id:(sessionResult as any).session_key, time: sessionResult.$createdAt, extra_data: sessionResult };
+        const activity = { actor: `SU:${userId}`, verb: 'scored', object: `SessionResult:${(sessionResult as any).$id}`, foreign_id:(sessionResult as any).sessionKey, time: sessionResult.$createdAt, extra_data: sessionResult };
         // Add an activity to the feed
         await sessionFeed.addActivity(activity);
 
@@ -129,7 +129,7 @@ export default async ({ req, res, log, error }: Context) => {
         const timelineFeed = client.feed('timeline', userId);
         await timelineFeed.addActivity(activity);
 
-        const programId = (sessionResult as any).program_key;
+        const programId = (sessionResult as any).programKey;
         // - Post result to the program feed and program aggregation feed.
         const programAggregated = client.feed('program_aggregated', programId);
         await programAggregated.addActivity(activity);
