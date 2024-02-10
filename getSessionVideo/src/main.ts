@@ -95,6 +95,7 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json({
           hash,
           timestamp,
+          videoId: video.guid,
         });
       }
 
@@ -115,6 +116,7 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json({
           hash,
           timestamp,
+          videoId,
         });
       }
 
