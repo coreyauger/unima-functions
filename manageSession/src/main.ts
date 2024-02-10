@@ -63,9 +63,9 @@ export default async ({ req, res, log, error }: Context) => {
       const db = new Databases(client);
       const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
         "program",
-        update.program
+        update.programKey
         ).catch((r) => undefined);
-      if(!program?.$id)throw new Error("Could not find prorgram for session with id: " + update.program);
+      if(!program?.$id)throw new Error("Could not find prorgram for session with id: " + update.programKey);
       const instructor = (program as any).instructor.profile as [];
       if(!instructor.find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);
 
