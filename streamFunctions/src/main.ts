@@ -35,8 +35,26 @@ export default async ({ req, res, log, error }: Context) => {
       log(req.body);
       const jsonPayload = JSON.parse(req.body);
       const jwtToken = jsonPayload.jwtToken;      
-      if(!jwtToken)throw new Error("No JWT token in request body");          
+      if(!jwtToken)throw new Error("No JWT token in request body");
       
+      const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+      const programId = jsonPayload.programId;
+      if(programId){
+        const client = new Client()
+          .setEndpoint('https://cloud.appwrite.io/v1')
+          .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+          .setKey(process.env.APPWRITE_API_KEY!);
+        const db = new Databases(client);
+        const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+          "program",
+          programId);
+        const programToken = streamClient.createUserToken(program.$id);
+        return res.json({
+          programToken
+        });  
+      }        
+      
+      // return "this" users token
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
         .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
@@ -45,11 +63,11 @@ export default async ({ req, res, log, error }: Context) => {
       const userAccount = new Account(userClient);
 
       const userId = (await userAccount.get()).$id;
-      const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-      const token = streamClient.createUserToken(userId);        
+      
+      const userToken = streamClient.createUserToken(userId);        
       
       return res.json({
-        token
+        userToken
       });      
   }catch(e:any) {
     error(e);
