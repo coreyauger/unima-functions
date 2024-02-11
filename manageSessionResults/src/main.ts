@@ -115,11 +115,10 @@ export default async ({ req, res, log, error }: Context) => {
           }        
         );
         log("sessionResult: " + JSON.stringify(sessionResult))
-        const sessionDoc = db.getDocument(process.env.APPWRITE_DATABASE_ID!,"session",(sessionResult as any).session.$id);
         await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "session",
           (sessionResult as any).session.$id, {
-            views: ((sessionDoc as any).views + 1),
+            views: ((sessionResult as any).session.views + 1),
           });    
         log("sessionResult: " + JSON.stringify(sessionResult));        
         // - Also post the result to the sessions timeline
