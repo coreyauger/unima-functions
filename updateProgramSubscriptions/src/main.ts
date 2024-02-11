@@ -132,14 +132,7 @@ export default async ({ req, res, log, error }: Context) => {
         }else{
           throw Error("DELETE called on a document that does not exist");
         }
-      }
-      // `res.json()` is a handy helper for sending JSON
-      // return res.json({
-      //   motto: 'Build like a team of hundreds_',
-      //   learn: 'https://appwrite.io/docs',
-      //   connect: 'https://appwrite.io/discord',
-      //   getInspired: 'https://builtwith.appwrite.io',
-      // });
+      }     
   }catch(e:any) {
     error(e);
     throw e;
