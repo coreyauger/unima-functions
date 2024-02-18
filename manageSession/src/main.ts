@@ -65,7 +65,15 @@ export default async ({ req, res, log, error }: Context) => {
         "program",
         update.programKey
         ).catch((r) => undefined);
+      const series = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+        "program",
+        update.seriesKey
+        ).catch((r) => undefined);
       if(!program?.$id)throw new Error("Could not find prorgram for session with id: " + update.programKey);
+      if(series?.$id){
+        const seriesCheck = (program as any).series.find( (s: any) => s.$id === series.$id);
+        if(!seriesCheck)throw new Error("Trying to add session to series that is not in the correct program");
+      }
       const instructor = (program as any).instructor.profile as [];
       if(!instructor.find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);
 
@@ -108,6 +116,13 @@ export default async ({ req, res, log, error }: Context) => {
             numSessions: (program as any).numSessions + 1,
             totalTimeMs: (program as any).totalTimeMs + (parseInt(update.length) * 60 * 1000),
           });
+        if(series?.$id){
+          await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
+            "series",
+            series.$id,{
+              numSessions: (series as any).numSessions + 1,
+            });
+        }
         log(`session: ${JSON.stringify(created)}`);       
         return res.json(created);
       }
