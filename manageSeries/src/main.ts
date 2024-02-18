@@ -55,6 +55,9 @@ export default async ({ req, res, log, error }: Context) => {
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`);
 
+      const programKey = jsonPayload.programKey;      
+      if(!jwtToken)throw new Error("No programKey in request body");
+
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
           .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
@@ -63,7 +66,7 @@ export default async ({ req, res, log, error }: Context) => {
       const db = new Databases(client);
       const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
         "program",
-        update.programKey
+        programKey
         ).catch((r) => undefined);
       if(!program?.$id)throw new Error("Could not find prorgram for series with id: " + update.programKey);
       const instructor = (program as any).instructor.profile as [];
@@ -79,7 +82,8 @@ export default async ({ req, res, log, error }: Context) => {
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "series",
           series?.$id, {
-            ...update,           
+            ...update,
+            program: program.$id,    
           });                  
           return res.json(doc);               
       } else {        
@@ -90,7 +94,8 @@ export default async ({ req, res, log, error }: Context) => {
           "series",
           seriesId,
           {
-            ...update,            
+            ...update,
+            program: program.$id,          
           },
           [
             Permission.read(Role.users()),        
