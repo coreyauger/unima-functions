@@ -42,7 +42,7 @@ export default async ({ req, res, log, error }: Context) => {
       const jsonPayload = JSON.parse(req.body);
       const jwtToken = jsonPayload.jwtToken;      
       if(!jwtToken)throw new Error("No JWT token in request body");
-      const update = jsonPayload.session;             
+      const update = jsonPayload.series;             
       
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
@@ -65,50 +65,40 @@ export default async ({ req, res, log, error }: Context) => {
         "program",
         update.programKey
         ).catch((r) => undefined);
-      if(!program?.$id)throw new Error("Could not find prorgram for session with id: " + update.programKey);
+      if(!program?.$id)throw new Error("Could not find prorgram for series with id: " + update.programKey);
       const instructor = (program as any).instructor.profile as [];
       if(!instructor.find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);
 
-      const session = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
-        "session",
+      const series = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+        "series",
         update.$id
         ).catch((r) => undefined);
 
-      if(session?.$id){
-        log("Found session, checking if ok to update: " + program?.$id);
+      if(series?.$id){
+        log("Found series, checking if ok to update: " + series?.$id);
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
-          "session",
-          session?.$id, {
-            ...update,
-            profile: userId, // Don't allow a profile id change
+          "series",
+          series?.$id, {
+            ...update,           
           });                  
           return res.json(doc);               
       } else {        
-        const sessionId = ID.unique();
-        log("Create a new session with data: " + JSON.stringify(update));       
+        const seriesId = ID.unique();
+        log("Create a new series with data: " + JSON.stringify(update));       
         const created = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
-          "session",
-          sessionId,
+          "series",
+          seriesId,
           {
-            ...update,
-            profile: userId, // Don't allow a profile id change
+            ...update,            
           },
           [
             Permission.read(Role.users()),        
             Permission.update(Role.team("admin")),
             Permission.delete(Role.team("admin")),
             Permission.update(Role.user(userId)),            
-        ]);
-        // update the totoals for the program
-        log("update program totoals");
-        await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
-          "program",
-          program.$id,{
-            numSessions: (program as any).numSessions + 1,
-            totalTimeMs: (program as any).totalTimeMs + (parseInt(update.length) * 60 * 1000),
-          });
-        log(`session: ${JSON.stringify(created)}`);       
+        ]);      
+        log(`series: ${JSON.stringify(created)}`);       
         return res.json(created);
       }
   }catch(e:any) {
