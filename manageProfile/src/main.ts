@@ -76,10 +76,10 @@ export default async ({ req, res, log, error }: Context) => {
         ).catch((r) => undefined);
       if(profile?.$id){
         // update the profile
+        log("update profile");
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "profile",
-          userId, {
-            ...profile,
+          userId, {           
             ...updatesProfile,
           });
           await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
@@ -89,6 +89,7 @@ export default async ({ req, res, log, error }: Context) => {
             });          
           return res.json(doc);               
       } else {
+        log("create profile");
         const doc = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "profile",
