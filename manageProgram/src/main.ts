@@ -78,7 +78,7 @@ export default async ({ req, res, log, error }: Context) => {
         await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
             "profile",
             (program as any).profile.$id, {
-              ...(program as any).profile
+              ...update.profile
             });
         log("program profile updated!");
         return res.json(doc);               
