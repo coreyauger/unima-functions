@@ -62,7 +62,8 @@ export default async ({ req, res, log, error }: Context) => {
         "profileKey": userId,
         ...jsonPayload.userDetails,         
       }
-      log(`update profile: ${JSON.stringify(updatesProfile)}`);
+      log(`payload profile: ${JSON.stringify(updatesProfile)}`);
+      log(`payload userDetails: ${JSON.stringify(updatesUserDetails)}`);
 
       const client = new Client()
           .setEndpoint('https://cloud.appwrite.io/v1')
@@ -82,10 +83,11 @@ export default async ({ req, res, log, error }: Context) => {
           userId, {           
             ...updatesProfile,
           });
+          if(updatesUserDetails.)
           await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
             "user_details",
             userId, {
-              ...updatesUserDetails,
+              ...updatesUserDetails,           
             });          
           return res.json(doc);               
       } else {
