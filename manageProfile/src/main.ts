@@ -88,16 +88,13 @@ export default async ({ req, res, log, error }: Context) => {
           userId, {
             ...profile,
             ...updatesProfile,
-          }, 
-          [Query.equal("$id",userId)]);
+          });
           await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
             "user_details",
             userId, {
               ...updatesUserDetails,
-            }, 
-            [Query.equal("$id",userId)]);      
-          
-          return res.send(doc.$id);               
+            });          
+          return res.json(doc);               
       } else {
         const doc = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
@@ -124,7 +121,7 @@ export default async ({ req, res, log, error }: Context) => {
         timelineFeed.follow("user", userId);
         log("We have a stream result");
         //log(`createResult data: ${createResult.data}`);      
-        return res.send(doc.$id);
+        return res.json(doc);
       }
   }catch(e:any) {
     error(e);
