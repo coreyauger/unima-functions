@@ -83,7 +83,6 @@ export default async ({ req, res, log, error }: Context) => {
           userId, {           
             ...updatesProfile,
           });
-          if(updatesUserDetails.)
           await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
             "user_details",
             userId, {
