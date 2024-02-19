@@ -66,7 +66,7 @@ export default async ({ req, res, log, error }: Context) => {
         update.$id
         ).catch((r) => undefined);
       if(program?.$id){
-        log("Found program, checking if ok to update: " + program?.$id);
+        log("Found program, doing update: " + JSON.stringify(update));
         // TODO: check if the this is the instructor        
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "program",
@@ -74,12 +74,14 @@ export default async ({ req, res, log, error }: Context) => {
             ...update,
             profile: (program as any).profile.$id, // Don't allow a profile id change
           });
-          await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
+        log("program updated!");
+        await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
             "profile",
             (program as any).profile.$id, {
               ...(program as any).profile
-            });          
-          return res.json(doc);               
+            });
+        log("program profile updated!");
+        return res.json(doc);               
       } else {        
         const profileId = ID.unique();
         log("Create a new program profile with data: " + JSON.stringify(update.profile));
