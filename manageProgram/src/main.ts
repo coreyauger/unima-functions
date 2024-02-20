@@ -118,12 +118,12 @@ export default async ({ req, res, log, error }: Context) => {
             Permission.update(Role.user(userId)),            
         ]);
         log(`program: ${JSON.stringify(program)}`);
-        log(`create a team for the program: ${profileId}`);
+        log(`create a team for the program: ${program.$id}`);
         const teams = new Teams(client);
-        await teams.create(profileId, update.profile.name);
+        await teams.create(program.$id, update.profile.name);
         log(`members: ${(program as any).instructor.profile.join(",")}`)
         await Promise.all((program as any).instructor.profile.map((pid:string) => 
-          teams.createMembership(profileId, ["member"], "", undefined, pid)
+          teams.createMembership(program.$id, ["member"], "", undefined, pid)
         ));
         log("Team members assigned");
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
