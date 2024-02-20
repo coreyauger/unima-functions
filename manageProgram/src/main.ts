@@ -66,7 +66,8 @@ export default async ({ req, res, log, error }: Context) => {
         update.$id
         ).catch((r) => undefined);
       if(program?.$id){
-        log("Found program, doing update: " + JSON.stringify(update));
+        log("Found program: " + JSON.stringify(program));
+        log("Doing update: " + JSON.stringify(update));
         // TODO: check if the this is the instructor        
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "program",
@@ -85,7 +86,7 @@ export default async ({ req, res, log, error }: Context) => {
         const teams = new Teams(client);
         const instructors = new Set<string>(((program as any).instructor.profile as []).map((p: any) => p.$id));
         const instructorsToAdd = update.instructor.profile.filter((pid: string) => !instructors.has(pid));
-        log(`instructors : ${instructorsToAdd.join(",")}`);         
+        log(`instructors to add: ${instructorsToAdd.join(",")}`);         
         await Promise.all(instructorsToAdd.map((pid:string) => 
           teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
         ));
