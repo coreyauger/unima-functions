@@ -121,8 +121,8 @@ export default async ({ req, res, log, error }: Context) => {
         log(`create a team for the program: ${program.$id}`);
         const teams = new Teams(client);
         await teams.create(program.$id, update.profile.name);
-        log(`members: ${(program as any).instructor.profile.join(",")}`)
-        await Promise.all((program as any).instructor.profile.map((pid:string) => 
+        log(`members: ${update.instructor.profile.join(",")}`)
+        await Promise.all(update.instructor.profile.map((pid:string) => 
           teams.createMembership(program.$id, ["member"], "", undefined, pid)
         ));
         log("Team members assigned");
