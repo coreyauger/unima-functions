@@ -84,7 +84,7 @@ export default async ({ req, res, log, error }: Context) => {
         log("program profile updated!");
         log("update team members");
         const instructor = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
-          "update",
+          "instructor",
           program?.$id);
         log(`current instructors: ${JSON.stringify(instructor)}`);
         const currentInstructors = (instructor as any).profile.map((i: any) => i.$id);
