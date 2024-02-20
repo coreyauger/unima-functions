@@ -83,8 +83,9 @@ export default async ({ req, res, log, error }: Context) => {
         log("program profile updated!");
         log("update team members");
         const teams = new Teams(client);
-        await Promise.all((program as any).instructor.profile.map((pid:string) =>
-          teams.createMembership((program as any).profile.$id, ["member"], "", undefined, pid)
+         log(`members: ${update.instructor.profile.join(",")}`)
+        await Promise.all(update.instructor.profile.map((pid:string) => 
+          teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
         ));
         log("Team members assigned");
         return res.json(doc);               
