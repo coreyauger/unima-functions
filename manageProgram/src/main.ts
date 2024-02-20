@@ -83,8 +83,14 @@ export default async ({ req, res, log, error }: Context) => {
             });
         log("program profile updated!");
         log("update team members");
+        const instructor = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+          "update",
+          program?.$id);
+        log(`current instructors: ${JSON.stringify(instructor)}`);
+        const currentInstructors = (instructor as any).profile.map((i: any) => i.$id);
+        log(`current instructor ids: ${JSON.stringify(currentInstructors)}`);
         const teams = new Teams(client);
-        const instructors = new Set<string>(((program as any).instructor.profile as []).map((p: any) => p.$id));
+        const instructors = new Set<string>(currentInstructors);
         const instructorsToAdd = update.instructor.profile.filter((pid: string) => !instructors.has(pid));
         log(`instructors to add: ${instructorsToAdd.join(",")}`);         
         await Promise.all(instructorsToAdd.map((pid:string) => 
@@ -107,6 +113,22 @@ export default async ({ req, res, log, error }: Context) => {
             Permission.update(Role.user(userId)),            
         ]);
         log(`program profile: ${JSON.stringify(profile)}`);
+        log(`create instuctors: ${JSON.stringify(update.instructor.profile)}`);
+        const instructor = await db.createDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "instructor",
+          profile.$id,
+          {
+            ...update,
+            profile: update.instructor.profile,
+          },
+          [
+            Permission.read(Role.users()),        
+            Permission.update(Role.team("admin")),
+            Permission.delete(Role.team("admin")),
+            Permission.update(Role.user(userId)),            
+        ]);
+        log("create instuctors");
         const program = await db.createDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "program",
@@ -114,6 +136,7 @@ export default async ({ req, res, log, error }: Context) => {
           {
             ...update,
             profile: profile.$id,
+            instructor: instructor.$id,
           },
           [
             Permission.read(Role.users()),        
