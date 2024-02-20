@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Permission, ID, Role } from 'node-appwrite';
+import { Client, Account, Databases, Permission, ID, Role, Teams } from 'node-appwrite';
 import { connect } from 'getstream';
 
 function throwIfMissing(obj: any, keys: string[]): void {
@@ -81,6 +81,12 @@ export default async ({ req, res, log, error }: Context) => {
               ...update.profile
             });
         log("program profile updated!");
+        log("update team members");
+        const teams = new Teams(client);
+        await Promise.all((program as any).instructor.profile.map((pid:string) =>
+          teams.createMembership((program as any).profile.$id, ["member"], "", undefined, pid)
+        ));
+        log("Team members assigned");
         return res.json(doc);               
       } else {        
         const profileId = ID.unique();
@@ -112,6 +118,13 @@ export default async ({ req, res, log, error }: Context) => {
             Permission.update(Role.user(userId)),            
         ]);
         log(`program: ${JSON.stringify(program)}`);
+        log("create a team for the program");
+        const teams = new Teams(client);
+        await teams.create(profile.$id, update.profile.name);
+        await Promise.all((program as any).instructor.profile.map((pid:string) =>
+          teams.createMembership(profile.$id, ["member"], "", undefined, pid)
+        ));
+        log("Team members assigned");
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const user = await streamClient.user(profile.$id).getOrCreate(profile);
         await user.update(profile);
