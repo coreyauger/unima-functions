@@ -83,8 +83,10 @@ export default async ({ req, res, log, error }: Context) => {
         log("program profile updated!");
         log("update team members");
         const teams = new Teams(client);
-         log(`members: ${update.instructor.profile.join(",")}`)
-        await Promise.all(update.instructor.profile.map((pid:string) => 
+        const instructors = new Set<string>(((program as any).instructor.profile as []).map((p: any) => p.$id));
+        const instructorsToAdd = update.instructor.profile.filter((pid: string) => !instructors.has(pid));
+        log(`instructors : ${instructorsToAdd.join(",")}`);         
+        await Promise.all(instructorsToAdd.map((pid:string) => 
           teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
         ));
         log("Team members assigned");
