@@ -92,6 +92,13 @@ export default async ({ req, res, log, error }: Context) => {
         const teams = new Teams(client);
         const instructors = new Set<string>(currentInstructors);
         const instructorsToAdd = update.instructor.profile.filter((pid: string) => !instructors.has(pid));
+        await db.updateDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "instructor",
+          program?.$id,
+          {
+            profile: [...instructors, ...instructorsToAdd],
+          });
         log(`instructors to add: ${instructorsToAdd.join(",")}`);         
         await Promise.all(instructorsToAdd.map((pid:string) => 
           teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
@@ -119,7 +126,7 @@ export default async ({ req, res, log, error }: Context) => {
           "instructor",
           profile.$id,
           {
-            ...update,
+            program: profile.$id,
             profile: update.instructor.profile,
           },
           [
