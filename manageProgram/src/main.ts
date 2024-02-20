@@ -123,7 +123,7 @@ export default async ({ req, res, log, error }: Context) => {
         await teams.create(program.$id, update.profile.name);
         log(`members: ${update.instructor.profile.join(",")}`)
         await Promise.all(update.instructor.profile.map((pid:string) => 
-          teams.createMembership(program.$id, ["member"], `https://app.unima.network`, undefined, pid)
+          teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
         ));
         log("Team members assigned");
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
