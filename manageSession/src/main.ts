@@ -67,37 +67,14 @@ export default async ({ req, res, log, error }: Context) => {
         ).catch((r) => undefined);
 
       if(session?.$id){
-        log("Found session, update profile: " + session?.$id);
-        await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "profile", session?.$id, update.profile);
         log("update session: " + session?.$id);
-        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, 
-        {
-            ...update,
-            profile: session?.$id, // Don't allow a profile id change
-        });
+        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, update);
         return res.json(doc);               
       } else {        
-        const transaction = async () => {
-          log("About to create a session profile. From data: " + JSON.stringify(update.profile));
-          const profile = await db.createDocument(
-            process.env.APPWRITE_DATABASE_ID!,
-            "profile",
-            ID.unique(),
-            update.profile,
-            [
-              Permission.read(Role.users()),        
-              Permission.update(Role.team("admin")),
-              Permission.delete(Role.team("admin")),
-              Permission.update(Role.user(userId)),            
-          ]);
-          log(`session profile created: ${JSON.stringify(profile)}`);
+        const transaction = async () => {         
           try{
             log("Create a new session with data: " + JSON.stringify(update));
-            const created = await db.createDocument(process.env.APPWRITE_DATABASE_ID!, "session", profile.$id,
-              {
-                ...update,
-                profile: profile.$id, // Don't allow a profile id change
-              },
+            const created = await db.createDocument(process.env.APPWRITE_DATABASE_ID!, "session", ID.unique(), update,
               [
                 Permission.read(Role.users()),        
                 Permission.update(Role.team("admin")),
