@@ -25,7 +25,8 @@ export default async ({ req, res, log, error }: Context) => {
       const jsonPayload = JSON.parse(req.body);
       const jwtToken = jsonPayload.jwtToken;      
       if(!jwtToken)throw new Error("No JWT token in request body");
-      const update = jsonPayload.session;             
+      const update = jsonPayload.session;
+      log("session payload: " + JSON.stringify(update));        
       
       const userClient = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
@@ -77,6 +78,7 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json(doc);               
       } else {        
         const transaction = async () => {
+          log("About to create a session profile. From data: " + JSON.stringify(update.profile));
           const profile = await db.createDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "profile",
@@ -88,13 +90,13 @@ export default async ({ req, res, log, error }: Context) => {
               Permission.delete(Role.team("admin")),
               Permission.update(Role.user(userId)),            
           ]);
-          log(`session profile: ${JSON.stringify(profile)}`);
+          log(`session profile created: ${JSON.stringify(profile)}`);
           try{
             log("Create a new session with data: " + JSON.stringify(update));
             const created = await db.createDocument(process.env.APPWRITE_DATABASE_ID!, "session", profile.$id,
               {
                 ...update,
-                profile: userId, // Don't allow a profile id change
+                profile: profile.$id, // Don't allow a profile id change
               },
               [
                 Permission.read(Role.users()),        
