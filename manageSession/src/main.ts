@@ -72,33 +72,28 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json(doc);               
       } else {        
         const transaction = async () => {         
-          try{
-            log("Create a new session with data: " + JSON.stringify(update));
-            const created = await db.createDocument(process.env.APPWRITE_DATABASE_ID!, "session", ID.unique(), update,
-              [
-                Permission.read(Role.users()),        
-                Permission.update(Role.team("admin")),
-                Permission.delete(Role.team("admin")),
-                Permission.update(Role.user(userId)),            
-            ]);
-            // update the totoals for the program
-            log("update program totoals");
-            await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "program", program.$id,{
-                numSessions: (program as any).numSessions + 1,
-                totalTimeMs: (program as any).totalTimeMs + (parseInt(update.length) * 60 * 1000),
+          log("Create a new session with data: " + JSON.stringify(update));
+          const created = await db.createDocument(process.env.APPWRITE_DATABASE_ID!, "session", ID.unique(), update,
+            [
+              Permission.read(Role.users()),        
+              Permission.update(Role.team("admin")),
+              Permission.delete(Role.team("admin")),
+              Permission.update(Role.user(userId)),            
+          ]);
+          // update the totoals for the program
+          log("update program totoals");
+          await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "program", program.$id,{
+              numSessions: (program as any).numSessions + 1,
+              totalTimeMs: (program as any).totalTimeMs + (parseInt(update.length) * 60 * 1000),
+          });
+          if(series?.$id){
+            await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "series", series.$id,
+            {
+                numSessions: (series as any).numSessions + 1,
             });
-            if(series?.$id){
-              await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "series", series.$id,
-              {
-                  numSessions: (series as any).numSessions + 1,
-              });
-            }
-            log(`session: ${JSON.stringify(created)}`);
-            return created;
-          }catch(e: any){
-            await db.deleteDocument(process.env.APPWRITE_DATABASE_ID!,"profile",profile.$id);
-            throw e;
           }
+          log(`session: ${JSON.stringify(created)}`);
+          return created;
         }   
         const created = await transaction();
         return res.json(created);
