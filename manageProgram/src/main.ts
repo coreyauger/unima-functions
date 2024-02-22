@@ -159,7 +159,7 @@ export default async ({ req, res, log, error }: Context) => {
                   "program",
                   program.$id
                 );
-                return res.json(doc);
+                return doc;
               }catch(e: any){
               // rollback
                 await db.deleteDocument(process.env.APPWRITE_DATABASE_ID!,"program",profile.$id);
@@ -176,7 +176,8 @@ export default async ({ req, res, log, error }: Context) => {
             throw e;              
           }         
         }
-        await transaction();        
+        const program = await transaction();
+        return res.json(program);     
       }
   }catch(e:any) {
     error(e);
