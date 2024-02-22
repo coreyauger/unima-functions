@@ -1,24 +1,7 @@
 import { Client, Account, Databases, Permission, ID, Role } from 'node-appwrite';
 import { connect } from 'getstream';
+import { Context, throwIfMissing } from './libs/FunctUtils.js';
 
-function throwIfMissing(obj: any, keys: string[]): void {
-  const missing: string[] = [];
-  for (let key of keys) {
-    if (!(key in obj) || !obj[key]) {
-      missing.push(key);
-    }
-  }
-  if (missing.length > 0) {
-    throw new Error(`Missing required fields: ${missing.join(", ")}`);
-  }
-}
-
-type Context = {
-  req: any;
-  res: any;
-  log: (msg: any) => void;
-  error: (msg: any) => void;
-};
 
 // This is your Appwrite function
 // It's executed each time we get a request
@@ -83,47 +66,62 @@ export default async ({ req, res, log, error }: Context) => {
         ).catch((r) => undefined);
 
       if(session?.$id){
-        log("Found session, checking if ok to update: " + program?.$id);
-        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
-          "session",
-          session?.$id, {
+        log("Found session, update profile: " + session?.$id);
+        await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "profile", session?.$id, update.profile);
+        log("update session: " + session?.$id);
+        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, 
+        {
             ...update,
-            profile: userId, // Don't allow a profile id change
-          });                  
-          return res.json(doc);               
+            profile: session?.$id, // Don't allow a profile id change
+        });
+        return res.json(doc);               
       } else {        
-        const sessionId = ID.unique();
-        log("Create a new session with data: " + JSON.stringify(update));       
-        const created = await db.createDocument(
-          process.env.APPWRITE_DATABASE_ID!,
-          "session",
-          sessionId,
-          {
-            ...update,
-            profile: userId, // Don't allow a profile id change
-          },
-          [
-            Permission.read(Role.users()),        
-            Permission.update(Role.team("admin")),
-            Permission.delete(Role.team("admin")),
-            Permission.update(Role.user(userId)),            
-        ]);
-        // update the totoals for the program
-        log("update program totoals");
-        await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
-          "program",
-          program.$id,{
-            numSessions: (program as any).numSessions + 1,
-            totalTimeMs: (program as any).totalTimeMs + (parseInt(update.length) * 60 * 1000),
-          });
-        if(series?.$id){
-          await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
-            "series",
-            series.$id,{
-              numSessions: (series as any).numSessions + 1,
+        const transaction = async () => {
+          const profile = await db.createDocument(
+            process.env.APPWRITE_DATABASE_ID!,
+            "profile",
+            ID.unique(),
+            update.profile,
+            [
+              Permission.read(Role.users()),        
+              Permission.update(Role.team("admin")),
+              Permission.delete(Role.team("admin")),
+              Permission.update(Role.user(userId)),            
+          ]);
+          log(`session profile: ${JSON.stringify(profile)}`);
+          try{
+            log("Create a new session with data: " + JSON.stringify(update));
+            const created = await db.createDocument(process.env.APPWRITE_DATABASE_ID!, "session", profile.$id,
+              {
+                ...update,
+                profile: userId, // Don't allow a profile id change
+              },
+              [
+                Permission.read(Role.users()),        
+                Permission.update(Role.team("admin")),
+                Permission.delete(Role.team("admin")),
+                Permission.update(Role.user(userId)),            
+            ]);
+            // update the totoals for the program
+            log("update program totoals");
+            await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "program", program.$id,{
+                numSessions: (program as any).numSessions + 1,
+                totalTimeMs: (program as any).totalTimeMs + (parseInt(update.length) * 60 * 1000),
             });
-        }
-        log(`session: ${JSON.stringify(created)}`);       
+            if(series?.$id){
+              await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "series", series.$id,
+              {
+                  numSessions: (series as any).numSessions + 1,
+              });
+            }
+            log(`session: ${JSON.stringify(created)}`);
+            return created;
+          }catch(e: any){
+            await db.deleteDocument(process.env.APPWRITE_DATABASE_ID!,"profile",profile.$id);
+            throw e;
+          }
+        }   
+        const created = await transaction();
         return res.json(created);
       }
   }catch(e:any) {
