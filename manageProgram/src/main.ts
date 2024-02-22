@@ -1,24 +1,6 @@
 import { Client, Account, Databases, Permission, ID, Role, Teams } from 'node-appwrite';
 import { connect } from 'getstream';
-
-function throwIfMissing(obj: any, keys: string[]): void {
-  const missing: string[] = [];
-  for (let key of keys) {
-    if (!(key in obj) || !obj[key]) {
-      missing.push(key);
-    }
-  }
-  if (missing.length > 0) {
-    throw new Error(`Missing required fields: ${missing.join(", ")}`);
-  }
-}
-
-type Context = {
-  req: any;
-  res: any;
-  log: (msg: any) => void;
-  error: (msg: any) => void;
-};
+import { Context, throwIfMissing } from './libs/FunctUtils.js';
 
 // This is your Appwrite function
 // It's executed each time we get a request
@@ -65,7 +47,7 @@ export default async ({ req, res, log, error }: Context) => {
         "program",
         update.$id
         ).catch((r) => undefined);
-      if(program?.$id){
+      if(program?.$id){        
         log("Found program: " + JSON.stringify(program));
         log("Doing update: " + JSON.stringify(update));
         // TODO: check if the this is the instructor        
@@ -106,74 +88,95 @@ export default async ({ req, res, log, error }: Context) => {
         log("Team members assigned");
         return res.json(doc);               
       } else {        
-        const profileId = ID.unique();
         log("Create a new program profile with data: " + JSON.stringify(update.profile));
-        const profile = await db.createDocument(
-          process.env.APPWRITE_DATABASE_ID!,
-          "profile",
-          profileId,
-          update.profile,
-          [
-            Permission.read(Role.users()),        
-            Permission.update(Role.team("admin")),
-            Permission.delete(Role.team("admin")),
-            Permission.update(Role.user(userId)),            
-        ]);
-        log(`program profile: ${JSON.stringify(profile)}`);
-        log(`create instuctors: ${JSON.stringify(update.instructor.profile)}`);
-        const instructor = await db.createDocument(
-          process.env.APPWRITE_DATABASE_ID!,
-          "instructor",
-          profile.$id,
-          {
-            program: profile.$id,
-            profile: update.instructor.profile,
-          },
-          [
-            Permission.read(Role.users()),        
-            Permission.update(Role.team("admin")),
-            Permission.delete(Role.team("admin")),
-            Permission.update(Role.user(userId)),            
-        ]);
-        log("create instuctors");
-        const program = await db.createDocument(
-          process.env.APPWRITE_DATABASE_ID!,
-          "program",
-          profile.$id,
-          {
-            ...update,
-            profile: profile.$id,
-            instructor: instructor.$id,
-          },
-          [
-            Permission.read(Role.users()),        
-            Permission.update(Role.team("admin")),
-            Permission.delete(Role.team("admin")),
-            Permission.update(Role.user(userId)),            
-        ]);
-        log(`program: ${JSON.stringify(program)}`);
-        log(`create a team for the program: ${program.$id}`);
-        const teams = new Teams(client);
-        await teams.create(program.$id, update.profile.name);
-        log(`members: ${update.instructor.profile.join(",")}`)
-        await Promise.all(update.instructor.profile.map((pid:string) => 
-          teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
-        ));
-        log("Team members assigned");
-        const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-        const user = await streamClient.user(profile.$id).getOrCreate(profile);
-        await user.update(profile);
-        // we want to follow our own feed in the timeline..
-        const timelineFeed = streamClient.feed('timeline', profile.$id);
-        timelineFeed.follow("user", profile.$id);
-        log("We have a stream result");
-        //log(`createResult data: ${createResult.data}`);  
-        const doc = await db.getDocument(
-          process.env.APPWRITE_DATABASE_ID!,
-          "program",
-          program.$id
-        );
-        return res.json(doc);
+        const rollback = [];
+        const transaction = async () => {
+          const profile = await db.createDocument(
+            process.env.APPWRITE_DATABASE_ID!,
+            "profile",
+            ID.unique(),
+            update.profile,
+            [
+              Permission.read(Role.users()),        
+              Permission.update(Role.team("admin")),
+              Permission.delete(Role.team("admin")),
+              Permission.update(Role.user(userId)),            
+          ]);
+          log(`program profile: ${JSON.stringify(profile)}`);
+          log(`create instuctors: ${JSON.stringify(update.instructor.profile)}`);
+          try{
+            const instructor = await db.createDocument(
+              process.env.APPWRITE_DATABASE_ID!,
+              "instructor",
+              profile.$id,
+              {
+                program: profile.$id,
+                profile: update.instructor.profile,
+              },
+              [
+                Permission.read(Role.users()),        
+                Permission.update(Role.team("admin")),
+                Permission.delete(Role.team("admin")),
+                Permission.update(Role.user(userId)),            
+            ]);
+            log("created instuctors");
+            try{
+              const program = await db.createDocument(
+                process.env.APPWRITE_DATABASE_ID!,
+                "program",
+                profile.$id,
+                {
+                  ...update,
+                  profile: profile.$id,
+                  instructor: instructor.$id,
+                },
+                [
+                  Permission.read(Role.users()),        
+                  Permission.update(Role.team("admin")),
+                  Permission.delete(Role.team("admin")),
+                  Permission.update(Role.user(userId)),            
+              ]);
+              log(`program: ${JSON.stringify(program)}`);
+              log(`create a team for the program: ${program.$id}`);
+              try{
+                const teams = new Teams(client);
+                await teams.create(program.$id, update.profile.name);
+                log(`members: ${update.instructor.profile.join(",")}`)
+                await Promise.all(update.instructor.profile.map((pid:string) => 
+                  teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
+                ));
+                log("Team members assigned");
+                const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+                const user = await streamClient.user(profile.$id).getOrCreate(profile);
+                await user.update(profile);
+                // we want to follow our own feed in the timeline..
+                const timelineFeed = streamClient.feed('timeline', profile.$id);
+                timelineFeed.follow("user", profile.$id);
+                log("We have a stream result");
+                //log(`createResult data: ${createResult.data}`);  
+                const doc = await db.getDocument(
+                  process.env.APPWRITE_DATABASE_ID!,
+                  "program",
+                  program.$id
+                );
+                return res.json(doc);
+              }catch(e: any){
+              // rollback
+                await db.deleteDocument(process.env.APPWRITE_DATABASE_ID!,"program",profile.$id);
+                throw e;   
+              }
+            }catch(e: any){
+              // rollback the instructor
+              await db.deleteDocument(process.env.APPWRITE_DATABASE_ID!,"instructor",profile.$id);
+              throw e;   
+            }
+          }catch(e: any){
+            // rollback the profile.
+            await db.deleteDocument(process.env.APPWRITE_DATABASE_ID!,"profile",profile.$id);
+            throw e;              
+          }         
+        }
+        await transaction();        
       }
   }catch(e:any) {
     error(e);

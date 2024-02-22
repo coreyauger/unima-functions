@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "format": "prettier --write .",
-    "build": "tsc"
+    "build": "tsc",
+    "libs": "cp -r ../libs ./src"
   },
   "dependencies": {
     "node-appwrite": "^9.0.0",
