@@ -36,7 +36,14 @@ export default async ({ req, res, log, error }: Context) => {
       const jsonPayload = JSON.parse(req.body);
       const jwtToken = jsonPayload.jwtToken;      
       if(!jwtToken)throw new Error("No JWT token in request body");
-      
+             
+      const userClient = new Client()
+        .setEndpoint('https://cloud.appwrite.io/v1')
+        .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+        .setJWT(jwtToken);
+      const userAccount = new Account(userClient);
+
+      const userId = (await userAccount.get()).$id;
       const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       const programId = jsonPayload.programId;
       if(programId){
@@ -48,24 +55,17 @@ export default async ({ req, res, log, error }: Context) => {
         const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
           "program",
           programId);
-        const programToken = streamClient.createUserToken(program.$id);
+          log(`Got program: ${JSON.stringify(program)}`);
+        const instructor = (program as any).instructor.profile as [];
+        if(!instructor.find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);
+        const programToken = streamClient.createUserToken(programId);
+        log("return program token");
         return res.json({
           programToken
         });  
-      }        
-      
-      // return "this" users token
-      const userClient = new Client()
-        .setEndpoint('https://cloud.appwrite.io/v1')
-        .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
-        .setJWT(jwtToken);
-
-      const userAccount = new Account(userClient);
-
-      const userId = (await userAccount.get()).$id;
-      
-      const userToken = streamClient.createUserToken(userId);        
-      
+      }            
+      // return "this" users token      
+      const userToken = streamClient.createUserToken(userId);      
       return res.json({
         userToken
       });      
