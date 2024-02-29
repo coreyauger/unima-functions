@@ -93,6 +93,15 @@ export default async ({ req, res, log, error }: Context) => {
             });
           }
           log(`session: ${JSON.stringify(created)}`);
+
+          // post the new session to the group feed.
+          const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+          const programFeed = client.feed('user', program.$id );
+          // Create an activity object
+          const activity = { actor: `SU:${program.$id}`, verb: 'created', object: `Session:${created.$id}`, foreign_id:created.$id, time: created.$createdAt, extra_data: created };
+          // Add an activity to the feed
+          await programFeed.addActivity(activity);
+
           return created;
         }   
         const created = await transaction();
