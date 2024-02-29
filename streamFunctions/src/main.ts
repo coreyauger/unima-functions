@@ -42,8 +42,10 @@ export default async ({ req, res, log, error }: Context) => {
         .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
         .setJWT(jwtToken);
       const userAccount = new Account(userClient);
-
       const userId = (await userAccount.get()).$id;
+      if(!userId)throw new Error("No user found from JWT token");
+      log(`got userId: ${userId}`); 
+      
       const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       const programId = jsonPayload.programId;
       if(programId){
