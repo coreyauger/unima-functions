@@ -42,6 +42,7 @@ export default async ({ req, res, log, error }: Context) => {
           .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
           .setKey(process.env.APPWRITE_API_KEY!);
 
+      const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       const db = new Databases(client);
       const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
         "program",
@@ -68,6 +69,11 @@ export default async ({ req, res, log, error }: Context) => {
         const teams = new Teams(client);
         const instructors = new Set<string>(currentInstructors);
         const instructorsToAdd = update.instructor.profile.filter((pid: string) => !instructors.has(pid));
+        // we also want the instructor to follow the program feed.
+        update.instructor.profile.map((uid: string) => {
+          const instructorTimeline = streamClient.feed('timeline', uid);
+          instructorTimeline.follow("user", program?.$id);
+        });
         await db.updateDocument(
           process.env.APPWRITE_DATABASE_ID!,
           "instructor",
@@ -147,13 +153,18 @@ export default async ({ req, res, log, error }: Context) => {
                 await Promise.all(update.instructor.profile.map((pid:string) => 
                   teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
                 ));
-                log("Team members assigned");
-                const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+                log("Team members assigned");                
                 const user = await streamClient.user(profile.$id).getOrCreate(profile);
                 await user.update(profile);
                 // we want to follow our own feed in the timeline..
                 const timelineFeed = streamClient.feed('timeline', profile.$id);
                 timelineFeed.follow("user", profile.$id);
+                // we also want the instructor to follow the program feed.
+                update.instructor.profile.map((uid: string) => {
+                  const instructorTimeline = streamClient.feed('timeline', uid);
+                  instructorTimeline.follow("user", profile.$id);
+                });
+                
                 log("We have a stream result");
                 //log(`createResult data: ${createResult.data}`);  
                 const doc = await db.getDocument(
