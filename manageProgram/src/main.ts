@@ -48,15 +48,9 @@ export default async ({ req, res, log, error }: Context) => {
         update.$id
         ).catch((r) => undefined);
       if(program?.$id){        
-        log("Found program: " + JSON.stringify(program));
-        log("Doing update: " + JSON.stringify(update));
-        // TODO: check if the this is the instructor        
-        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
-          "program",
-          program?.$id, {
-            ...update,
-            profile: (program as any).profile.$id, // Don't allow a profile id change
-          });
+        log("Found program: " + JSON.stringify(program));        
+        // check if the this is the instructor   
+        if(!((program as any).instructor.profile as []).find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);        
         log("program updated!");
         await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
             "profile",
@@ -86,6 +80,14 @@ export default async ({ req, res, log, error }: Context) => {
           teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
         ));
         log("Team members assigned");
+        log("Doing update on program: " + JSON.stringify(update));
+        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
+          "program",
+          program?.$id, {
+            ...update,
+            profile: (program as any).profile.$id, // Don't allow a profile id change
+            instructor: instructor.$id, // make sure we don't blow this link away.
+          });
         return res.json(doc);               
       } else {        
         log("Create a new program profile with data: " + JSON.stringify(update.profile));
