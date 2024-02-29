@@ -55,9 +55,28 @@ export default async ({ req, res, log, error }: Context) => {
       log(`got userId: ${userId}`); 
 
       // Instantiate a new client (server side)
-      const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-      const userToken = client.createUserToken(userId);
-      
+      const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+
+      // check if we are an instructor trying to post on a class feed.
+      const programId = jsonPayload.programId;
+      if(programId){
+        const client = new Client()
+          .setEndpoint('https://cloud.appwrite.io/v1')
+          .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+          .setKey(process.env.APPWRITE_API_KEY!);
+        const db = new Databases(client)
+        const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+          "program",
+          programId);
+        log(`Got program: ${JSON.stringify(program)}`);
+        const instructor = (program as any).instructor.profile as [];
+        if(!instructor.find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);
+        const programToken = streamClient.createUserToken(programId);
+        log("return program token");
+        return res.send(programToken);
+      }            
+      const userToken = streamClient.createUserToken(userId);  
+      log("return user token");    
       return res.send(userToken);
   }catch(e:any) {
     error(e);
