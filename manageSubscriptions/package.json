@@ -1,5 +1,5 @@
 {
-  "name": "update-program-subscriptions",
+  "name": "manage-subscriptions",
   "version": "1.0.0",
   "description": "",
   "main": "dist/main.js",
