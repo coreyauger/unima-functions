@@ -79,7 +79,7 @@ export default async ({ req, res, log, error }: Context) => {
           const subscription = documents[0];               
           const updatedPrograms = [...(subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId), programId]
           log(`updatedPrograms: ${updatedPrograms}`);
-          await db.updateDocument(
+          const update = await db.updateDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "subscription",
             subscription.$id,
@@ -89,7 +89,7 @@ export default async ({ req, res, log, error }: Context) => {
             }        
           );
           await userTimeline.follow("user", programId);
-          return res.send(subscription.$id);
+          return res.json(update);
         }else{
           log(`create`);
           const subscription = await db.createDocument(
@@ -109,7 +109,8 @@ export default async ({ req, res, log, error }: Context) => {
             ]
           );
           await userTimeline.follow("user", programId);
-          return res.send(subscription.$id);
+          log("subscription created");
+          return res.json(subscription);
         }
       }
       if (req.method === 'DELETE') {
@@ -118,7 +119,7 @@ export default async ({ req, res, log, error }: Context) => {
           const subscription = documents[0];               
           const updatedPrograms = (subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId)
           log(`updatedPrograms: ${updatedPrograms}`);
-          await db.updateDocument(
+          const update = await db.updateDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "subscription",
             subscription.$id,
@@ -128,7 +129,8 @@ export default async ({ req, res, log, error }: Context) => {
             }        
           );
           await userTimeline.unfollow("user", programId);
-          return res.send(subscription.$id);
+          log("subscription deleted");
+          return res.json(update);
         }else{
           throw Error("DELETE called on a document that does not exist");
         }
