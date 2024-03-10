@@ -72,10 +72,11 @@ export default async ({ req, res, log, error }: Context) => {
           .setEndpoint('https://cloud.appwrite.io/v1')
           .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
           .setKey(process.env.APPWRITE_API_KEY!);
-        const teams = new Teams(client);
-        const membership: Models.Membership = await teams.getMembership(organizationId,userId);
-        log(`Got membership: ${JSON.stringify(membership)}`);
-        if(membership){
+        const teams = new Teams(client);		 
+        log(`looking up org membership: ${organizationId}`) 
+		    const memberships: Models.MembershipList = await teams.listMemberships(organizationId);    
+        log(`Got membership: ${JSON.stringify(memberships)}`);
+        if(memberships.memberships.find((m: Models.Membership) => m.userId === userId)){
           const orgToken = streamClient.createUserToken(organizationId);
           log("return organization token");
           return res.json({
