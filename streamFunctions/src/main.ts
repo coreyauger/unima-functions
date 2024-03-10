@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Query, Permission, Role } from 'node-appwrite';
+import { Client, Account, Databases, Query, Permission, Role, Teams, Models } from 'node-appwrite';
 import { connect } from 'getstream';
 
 function throwIfMissing(obj: any, keys: string[]): void {
@@ -45,7 +45,7 @@ export default async ({ req, res, log, error }: Context) => {
       const userId = (await userAccount.get()).$id;
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`); 
-      
+
       const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       const programId = jsonPayload.programId;
       if(programId){
@@ -65,7 +65,24 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json({
           programToken
         });  
-      }            
+      }
+      const organizationId = jsonPayload.organizationId;   
+      if(organizationId){
+        const client = new Client()
+          .setEndpoint('https://cloud.appwrite.io/v1')
+          .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+          .setKey(process.env.APPWRITE_API_KEY!);
+        const teams = new Teams(client);
+        const membership: Models.Membership = await teams.getMembership(organizationId,userId);
+        log(`Got membership: ${JSON.stringify(membership)}`);
+        if(membership){
+          const orgToken = streamClient.createUserToken(organizationId);
+          log("return organization token");
+          return res.json({
+            orgToken
+          });  
+        }
+      }         
       // return "this" users token      
       const userToken = streamClient.createUserToken(userId);      
       return res.json({
