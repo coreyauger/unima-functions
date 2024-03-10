@@ -77,10 +77,10 @@ export default async ({ req, res, log, error }: Context) => {
 		    const memberships: Models.MembershipList = await teams.listMemberships(organizationId);    
         log(`Got membership: ${JSON.stringify(memberships)}`);
         if(memberships.memberships.find((m: Models.Membership) => m.userId === userId)){
-          const orgToken = streamClient.createUserToken(organizationId);
+          const organizationToken = streamClient.createUserToken(organizationId);
           log("return organization token");
           return res.json({
-            orgToken
+            organizationToken
           });  
         }
       }         
