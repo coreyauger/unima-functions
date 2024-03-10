@@ -65,76 +65,65 @@ export default async ({ req, res, log, error }: Context) => {
       const db = new Databases(client);
       const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       const userTimeline = await streamClient.feed("timeline", userId);
-
-      const {documents} = await db.listDocuments(
-        process.env.APPWRITE_DATABASE_ID!,
-        "subscription",
-        [
-          Query.equal("userKey",userId)
-        ]
-      );
+      
       if (req.method === 'POST') {
-        if(documents.length){     
-          log(`update`);
-          const subscription = documents[0];               
-          const updatedPrograms = [...(subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId), programId]
-          log(`updatedPrograms: ${updatedPrograms}`);
-          const update = await db.updateDocument(
+        const {documents} = await db.listDocuments(
+          process.env.APPWRITE_DATABASE_ID!,
+          "subscription",
+          [
+            Query.equal("userKey",userId)
+          ]
+        );
+        log(`create`);
+        // check if we already have a subscription to this program?
+        const existing = documents.find((d: any) => d.programKey === programId);
+        if(!existing){
+          const subscription = await db.createDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "subscription",
-            subscription.$id,
+            ID.unique(),
             {
               "userKey": userId,
-              "program": updatedPrograms
-            }        
+              "programKey": programId
+            },
+            [
+              Permission.read(Role.users()),        
+              Permission.update(Role.team("admin")),
+              Permission.delete(Role.team("admin")),
+              Permission.delete(Role.user(userId)),
+              Permission.update(Role.user(userId)),
+            ]      
           );
           await userTimeline.follow("user", programId);
-          return res.json(update);
-        }else{
-          log(`create`);
-          const subscription = await db.createDocument(
-              process.env.APPWRITE_DATABASE_ID!,
-              "subscription",
-              ID.unique(),
-              {
-                "userKey": userId,
-                "program": [programId]
-              },
-              [
-                Permission.read(Role.users()),        
-                Permission.update(Role.team("admin")),
-                Permission.delete(Role.team("admin")),
-                Permission.delete(Role.user(userId)),
-                Permission.update(Role.user(userId)),            
-            ]
-          );
-          await userTimeline.follow("user", programId);
-          log("subscription created");
           return res.json(subscription);
-        }
+        }else{
+          log(`subscription already exists for: ${userId} to program: ${programId}, ignoring`);
+          // make sure we are following
+          await userTimeline.follow("user", programId);
+          return res.json(existing);
+        }        
       }
       if (req.method === 'DELETE') {
-        if(documents.length){
-          log(`delete`);
-          const subscription = documents[0];               
-          const updatedPrograms = (subscription as any).program.map( (p: any) => p.$id ).filter( (s: String) => s !== programId)
-          log(`updatedPrograms: ${updatedPrograms}`);
-          const update = await db.updateDocument(
-            process.env.APPWRITE_DATABASE_ID!,
-            "subscription",
-            subscription.$id,
-            {
-              "userKey": userId,
-              "program": updatedPrograms
-            }        
-          );
-          await userTimeline.unfollow("user", programId);
-          log("subscription deleted");
-          return res.json(update);
-        }else{
-          throw Error("DELETE called on a document that does not exist");
-        }
-      }     
+        log(`delete`);
+        const {documents} = await db.listDocuments(
+          process.env.APPWRITE_DATABASE_ID!,
+          "subscription",
+          [
+            Query.equal("userKey",userId),
+            Query.equal("programKey",programId)
+          ]
+        );
+        if(documents.length === 0)throw new Error("delete called for subscription that does not exist");
+        const subscription = documents[0];
+        const deleted = await db.deleteDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "subscription",
+          subscription.$id,
+        );
+        await userTimeline.unfollow("user", programId);
+        log("subscription deleted");
+        return res.json(deleted);        
+      }
   }catch(e:any) {
     error(e);
     throw e;
