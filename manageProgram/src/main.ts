@@ -73,6 +73,12 @@ export default async ({ req, res, log, error }: Context) => {
         update.instructor.profile.map((uid: string) => {
           const instructorTimeline = streamClient.feed('timeline', uid);
           instructorTimeline.follow("user", program?.$id);
+          const instructorNotification = streamClient.feed('notification', uid);
+          instructorNotification.follow("user", program?.$id);
+          if(update.organizationKey){
+            instructorTimeline.follow("user", update.organizationKey);
+            instructorNotification.follow("user", update.organizationKey);
+          }
         });
         await db.updateDocument(
           process.env.APPWRITE_DATABASE_ID!,
@@ -97,7 +103,6 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json(doc);               
       } else {        
         log("Create a new program profile with data: " + JSON.stringify(update.profile));
-        const rollback = [];
         const transaction = async () => {
           const profile = await db.createDocument(
             process.env.APPWRITE_DATABASE_ID!,
@@ -163,8 +168,13 @@ export default async ({ req, res, log, error }: Context) => {
                 update.instructor.profile.map((uid: string) => {
                   const instructorTimeline = streamClient.feed('timeline', uid);
                   instructorTimeline.follow("user", profile.$id);
+                  const instructorNotification = streamClient.feed('notification', uid);
+                  instructorNotification.follow("user", program?.$id);
+                  if(update.organizationKey){
+                    instructorTimeline.follow("user", update.organizationKey);
+                    instructorNotification.follow("user", update.organizationKey);
+                  }
                 });
-                
                 log("We have a stream result");
                 //log(`createResult data: ${createResult.data}`);  
                 const doc = await db.getDocument(
