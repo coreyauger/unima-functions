@@ -78,6 +78,7 @@ export default async ({ req, res, log, error }: Context) => {
           if(update.organizationKey){
             instructorTimeline.follow("user", update.organizationKey);
             instructorNotification.follow("user", update.organizationKey);
+            instructorNotification.follow("comment", update.$id);
           }
         });
         await db.updateDocument(
@@ -173,6 +174,7 @@ export default async ({ req, res, log, error }: Context) => {
                   if(update.organizationKey){
                     instructorTimeline.follow("user", update.organizationKey);
                     instructorNotification.follow("user", update.organizationKey);
+                    instructorNotification.follow("comment", program?.$id);
                   }
                 });
                 log("We have a stream result");
