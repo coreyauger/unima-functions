@@ -65,7 +65,11 @@ export default async ({ req, res, log, error }: Context) => {
       const db = new Databases(client);
       const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       const userTimeline = await streamClient.feed("timeline", userId);
-      
+      const userNotification = await streamClient.feed("notification", userId);
+      const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+        "program",
+        programId
+        );
       if (req.method === 'POST') {
         const {documents} = await db.listDocuments(
           process.env.APPWRITE_DATABASE_ID!,
@@ -95,11 +99,21 @@ export default async ({ req, res, log, error }: Context) => {
             ]      
           );
           await userTimeline.follow("user", programId);
+          await userNotification.follow("user", programId);
+          if((program as any).organizationKey){
+            await userTimeline.follow("user", (program as any).organizationKey);
+            await userNotification.follow("user", (program as any).organizationKey);
+          }
           return res.json(subscription);
         }else{
           log(`subscription already exists for: ${userId} to program: ${programId}, ignoring`);
           // make sure we are following
           await userTimeline.follow("user", programId);
+          await userNotification.follow("user", programId);          
+          if((program as any).organizationKey){
+            await userTimeline.follow("user", (program as any).organizationKey);
+            await userNotification.follow("user", (program as any).organizationKey);
+          }
           return res.json(existing);
         }        
       }
@@ -121,6 +135,11 @@ export default async ({ req, res, log, error }: Context) => {
           subscription.$id,
         );
         await userTimeline.unfollow("user", programId);
+        await userNotification.unfollow("user", programId);          
+        if((program as any).organizationKey){
+          await userTimeline.unfollow("user", (program as any).organizationKey);
+          await userNotification.unfollow("user", (program as any).organizationKey);
+        }
         log("subscription deleted");
         return res.json(deleted);        
       }
