@@ -44,6 +44,8 @@ export default async ({ req, res, log, error }: Context) => {
           .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
           .setKey(process.env.APPWRITE_API_KEY!);
 
+      const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+
       const db = new Databases(client);
       const program = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
         "program",
@@ -69,6 +71,11 @@ export default async ({ req, res, log, error }: Context) => {
       if(session?.$id){
         log("update session: " + session?.$id);
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, update);
+        // instructors get notification for comments
+        (doc as any).instuctors.map(async (id: string) => {
+          const userNotification = await streamClient.feed("notification", id);
+          await userNotification.follow("comments", session?.$id);
+        });
         return res.json(doc);               
       } else {        
         const transaction = async () => {         
@@ -95,12 +102,17 @@ export default async ({ req, res, log, error }: Context) => {
           log(`session: ${JSON.stringify(created)}`);
 
           // post the new session to the group feed.
-          const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
-          const programFeed = client.feed('user', program.$id );
+          const programFeed = streamClient.feed('user', program.$id );
           // Create an activity object
           const activity = { actor: `SU:${program.$id}`, verb: 'created', object: `Session:${created.$id}`, foreign_id:created.$id, time: created.$createdAt, extra_data: created };
           // Add an activity to the feed
           await programFeed.addActivity(activity);
+
+          // instructors get notification for comments
+          (created as any).instuctors.map(async (id: string) => {
+            const userNotification = await streamClient.feed("notification", id);
+            await userNotification.follow("comments", created.$id);
+          });
 
           return created;
         }   
