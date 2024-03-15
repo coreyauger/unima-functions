@@ -1,5 +1,6 @@
 import { Client, Account, Databases, Query, Permission, Role, Users, Storage, ID, Models } from 'node-appwrite';
 import { createHash } from 'node:crypto';
+import { File, Blob } from "@web-std/file";
 
 function sha256(content: string) {  
   return createHash('sha256').update(content).digest('hex')
@@ -112,6 +113,7 @@ export default async ({ req, res, log, error }: Context) => {
           log(`Fetched video: ${JSON.stringify(video)}`);
           // thumb eg:
           // https://vz-293d2639-e45.b-cdn.net/{videoId}/thumb.jpg
+          // https://vz-293d2639-e45.b-cdn.net/965db558-ed2a-426b-a3ba-925fed052760/thumbnail.jpg
           const thumbUrl = `https://${cdnHostname}/${videoGuid}/${video.thumbnailFileName}`
           const fileResonse: Models.File = await fetch(thumbUrl).then(async response => {
             const blob = await response.blob();
