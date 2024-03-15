@@ -109,7 +109,7 @@ export default async ({ req, res, log, error }: Context) => {
           await programFeed.addActivity(activity);
 
           // instructors get notification for comments
-          (created as any).instuctors.map(async (id: string) => {
+          update.instuctors.map(async (id: string) => {
             const userNotification = await streamClient.feed("notification", id);
             await userNotification.follow("comments", created.$id);
           });
