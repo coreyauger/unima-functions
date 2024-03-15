@@ -59,7 +59,7 @@ export default async ({ req, res, log, error }: Context) => {
               ...update.profile
             });
         log("program profile updated!");
-        log("update team members");
+        log("update team instructors");
         const instructor = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
           "instructor",
           program?.$id);
@@ -90,9 +90,9 @@ export default async ({ req, res, log, error }: Context) => {
           });
         log(`instructors to add: ${instructorsToAdd.join(",")}`);         
         await Promise.all(instructorsToAdd.map((pid:string) => 
-          teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
+          teams.createMembership(program.$id, ["instructor"], `https://cloud.appwrite.io`, undefined, pid)
         ));
-        log("Team members assigned");
+        log("Team instructors assigned");
         log("Doing update on program: " + JSON.stringify(update));
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
           "program",
@@ -155,11 +155,11 @@ export default async ({ req, res, log, error }: Context) => {
               try{
                 const teams = new Teams(client);
                 await teams.create(program.$id, update.profile.name);
-                log(`members: ${update.instructor.profile.join(",")}`)
+                log(`instructors: ${update.instructor.profile.join(",")}`)
                 await Promise.all(update.instructor.profile.map((pid:string) => 
-                  teams.createMembership(program.$id, ["member"], `https://cloud.appwrite.io`, undefined, pid)
+                  teams.createMembership(program.$id, ["instructor"], `https://cloud.appwrite.io`, undefined, pid)
                 ));
-                log("Team members assigned");                
+                log("Team instructors assigned");                
                 const user = await streamClient.user(profile.$id).getOrCreate(profile);
                 await user.update(profile);
                 // we want to follow our own feed in the timeline..
