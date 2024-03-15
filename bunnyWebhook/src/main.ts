@@ -61,7 +61,8 @@ export default async ({ req, res, log, error }: Context) => {
   ]);
     try{     
       log(req.body);
-      const jsonPayload = JSON.parse(req.body);
+      const jsonPayload = req.body;
+      log(`jsonPayload: ${jsonPayload}`);
       
       const client = new Client()
         .setEndpoint('https://cloud.appwrite.io/v1')
