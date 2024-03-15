@@ -117,7 +117,7 @@ export default async ({ req, res, log, error }: Context) => {
               Permission.update(Role.user(userId)),            
           ]);
           log(`program profile: ${JSON.stringify(profile)}`);
-          log(`create instuctors: ${JSON.stringify(update.instructor.profile)}`);
+          log(`create instructors: ${JSON.stringify(update.instructor.profile)}`);
           try{
             const instructor = await db.createDocument(
               process.env.APPWRITE_DATABASE_ID!,
@@ -133,7 +133,7 @@ export default async ({ req, res, log, error }: Context) => {
                 Permission.delete(Role.team("admin")),
                 Permission.update(Role.user(userId)),            
             ]);
-            log("created instuctors");
+            log("created instructors");
             try{
               const program = await db.createDocument(
                 process.env.APPWRITE_DATABASE_ID!,

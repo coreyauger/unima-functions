@@ -72,7 +72,7 @@ export default async ({ req, res, log, error }: Context) => {
         log("update session: " + session?.$id);
         const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, update);
         // instructors get notification for comments
-        (doc as any).instuctors.map(async (id: string) => {
+        (doc as any).instructors.map(async (id: string) => {
           const userNotification = await streamClient.feed("notification", id);
           await userNotification.follow("comments", session?.$id);
         });
@@ -109,7 +109,7 @@ export default async ({ req, res, log, error }: Context) => {
           await programFeed.addActivity(activity);
 
           // instructors get notification for comments
-          update.instuctors.map(async (id: string) => {
+          (created as any).instructors.map(async (id: string) => {
             const userNotification = await streamClient.feed("notification", id);
             await userNotification.follow("comments", created.$id);
           });
