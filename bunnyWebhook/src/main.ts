@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Query, Permission, Role, Users } from 'node-appwrite';
+import { Client, Account, Databases, Query, Permission, Role, Users, Storage, ID, Models } from 'node-appwrite';
 import { createHash } from 'node:crypto';
 
 function sha256(content: string) {  
@@ -6,6 +6,7 @@ function sha256(content: string) {
 }
 
 const libraryId = "198142";
+const cdnHostname = "vz-293d2639-e45.b-cdn.net";
 
 function throwIfMissing(obj: any, keys: string[]): void {
   const missing: string[] = [];
@@ -91,24 +92,55 @@ export default async ({ req, res, log, error }: Context) => {
           }
         );
         // if the video is finished.. lets grab any media that we need.
-        const videoLibraryId = jsonPayload.VideoLibraryId;
-        const videoGuid = jsonPayload.VideoGuid;
-        // create the video
-        const url = `https://video.bunnycdn.com/library/${videoLibraryId}/videos/${videoGuid}`;
-        log("About to get video at url: " + url);
-        log(process.env.BUNNY_API_KEY!);
-        const options: RequestInit = {
-          method: 'GET',
-          headers: {
-            accept: 'application/json',
-            'content-type': 'application/*+json',
-            AccessKey: process.env.BUNNY_API_KEY!
-          }      
-        };
-        const video = await fetch(url, options).then(res => res.json());
-        log(`Fetched video: ${JSON.stringify(video)}`);
-
-        
+        if(jsonPayload.Status === 3){
+          log("video finished.. grabbing thumb")
+          const videoLibraryId = jsonPayload.VideoLibraryId;
+          const videoGuid = jsonPayload.VideoGuid;
+          // create the video
+          const url = `https://video.bunnycdn.com/library/${videoLibraryId}/videos/${videoGuid}`;
+          log("About to get video at url: " + url);
+          log(process.env.BUNNY_API_KEY!);
+          const options: RequestInit = {
+            method: 'GET',
+            headers: {
+              accept: 'application/json',
+              'content-type': 'application/*+json',
+              AccessKey: process.env.BUNNY_API_KEY!
+            }      
+          };
+          const video = await fetch(url, options).then(res => res.json());
+          log(`Fetched video: ${JSON.stringify(video)}`);
+          // thumb eg:
+          // https://vz-293d2639-e45.b-cdn.net/{videoId}/thumb.jpg
+          const thumbUrl = `https://${cdnHostname}/${videoGuid}/${video.thumbnailFileName}`
+          const fileResonse: Models.File = await fetch(thumbUrl).then(async response => {
+            const blob = await response.blob();
+            const file = new File([blob], video.thumbnailFileName) 
+            const storage = new Storage(client);        
+            return storage.createFile(
+              "profile_pics",
+              ID.unique(),
+              file,
+              [
+                Permission.read(Role.any()),
+                Permission.write(Role.user(session.$id)),
+                Permission.update(Role.user(session.$id)),
+                Permission.delete(Role.user(session.$id)),
+              ],
+            );
+          });
+          log("fileResonse: " + JSON.stringify(fileResonse));
+          await db.updateDocument(
+            process.env.APPWRITE_DATABASE_ID!,
+            "session",
+            session.$id,
+            {
+              coverImgId: fileResonse.$id
+            }
+          );
+          log("thumbnail updated");
+        }
+      log("done.")        
       }else{
         throw Error("No video Id in webhook request.")
       }
