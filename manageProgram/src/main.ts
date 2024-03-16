@@ -2,6 +2,8 @@ import { Client, Account, Databases, Permission, ID, Role, Teams } from 'node-ap
 import { connect } from 'getstream';
 import { Context, throwIfMissing } from './libs/FunctUtils.js';
 
+const libraryId = "198142";
+
 // This is your Appwrite function
 // It's executed each time we get a request
 export default async ({ req, res, log, error }: Context) => {
@@ -187,6 +189,7 @@ export default async ({ req, res, log, error }: Context) => {
                   program.$id
                 );
                 // create a video collection to help manage and organize
+                log("about to create a video collection")
                 const url = `https://video.bunnycdn.com/library/${libraryId}/collections`;
                 const options: RequestInit = {
                   method: 'POST',
@@ -204,6 +207,7 @@ export default async ({ req, res, log, error }: Context) => {
                 return doc;
               }catch(e: any){
               // rollback
+                log("throw erroe");
                 await db.deleteDocument(process.env.APPWRITE_DATABASE_ID!,"program",profile.$id);
                 throw e;   
               }
