@@ -188,9 +188,9 @@ export default async ({ req, res, log, error }: Context) => {
                   "program",
                   program.$id
                 );
-                // create a video collection to help manage and organize
-                log("about to create a video collection")
+                // create a video collection to help manage and organize               
                 const url = `https://video.bunnycdn.com/library/${libraryId}/collections`;
+                log(`about to create a video collection: ${url}`)
                 const options: RequestInit = {
                   method: 'POST',
                   headers: {
