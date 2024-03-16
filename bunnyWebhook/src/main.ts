@@ -1,5 +1,6 @@
 import { Client, Account, Databases, Query, Permission, Role, Users, Storage, ID, Models, InputFile } from 'node-appwrite';
 import { createHash } from 'node:crypto';
+import { Readable } from 'node:stream';
 
 function sha256(content: string) {  
   return createHash('sha256').update(content).digest('hex')
@@ -115,12 +116,13 @@ export default async ({ req, res, log, error }: Context) => {
           // https://vz-293d2639-e45.b-cdn.net/965db558-ed2a-426b-a3ba-925fed052760/thumbnail.jpg
           const thumbUrl = `https://${cdnHostname}/${videoGuid}/${video.thumbnailFileName}`
           const fileResonse: Models.File = await fetch(thumbUrl).then(async response => {
-            const blob = await response.blob();            
-            const storage = new Storage(client);        
+            const arrayBuffer = await response.arrayBuffer()
+            const storage = new Storage(client);
+            log("about to write image file to storage");
             return storage.createFile(
               "profile_pics",
               ID.unique(),
-              InputFile.fromBlob(blob, video.thumbnailFileName),
+              InputFile.fromBuffer(Buffer.from(arrayBuffer), video.thumbnailFileName),
               [
                 Permission.read(Role.any()),
                 Permission.write(Role.user(session.$id)),
