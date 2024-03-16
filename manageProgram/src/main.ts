@@ -12,6 +12,8 @@ export default async ({ req, res, log, error }: Context) => {
     'STREAM_API_KEY',
     'STREAM_API_SECRET',
     'STREAM_APP_ID',
+    'BUNNY_API_KEY',
+    'BUNNY_STREAM_API_KEY',
   ]);
     try{
        // The `req` object contains the request data
@@ -184,6 +186,21 @@ export default async ({ req, res, log, error }: Context) => {
                   "program",
                   program.$id
                 );
+                // create a video collection to help manage and organize
+                const url = `https://video.bunnycdn.com/library/${libraryId}/collections`;
+                const options: RequestInit = {
+                  method: 'POST',
+                  headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/*+json',
+                    AccessKey: process.env.BUNNY_API_KEY!
+                  },
+                  body: JSON.stringify({
+                    name: program.$id
+                  })
+                };
+                const collectionResponse = await fetch(url, options).then(res => res.json());
+                log(`create video collection response: ${JSON.stringify(collectionResponse)}`)
                 return doc;
               }catch(e: any){
               // rollback
