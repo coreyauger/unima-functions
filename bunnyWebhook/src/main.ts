@@ -89,7 +89,7 @@ export default async ({ req, res, log, error }: Context) => {
           "session",
           session.$id,
           {
-            videoEncodingStatus: jsonPayload.Status
+            status: jsonPayload.Status
           }
         );
         // if the video is finished.. lets grab any media that we need.
@@ -137,7 +137,8 @@ export default async ({ req, res, log, error }: Context) => {
             "session",
             session.$id,
             {
-              coverImgId: fileResonse.$id
+              coverImgId: fileResonse.$id,
+              numCovers: video.thumbnailCount,
             }
           );
           log("thumbnail updated");
