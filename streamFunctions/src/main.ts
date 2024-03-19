@@ -152,13 +152,13 @@ export default async ({ req, res, log, error }: Context) => {
         if(followerIds.results.length === 0)return res.json([]);
         const db = new Databases(client);
         // eg: "feed_id": "timeline:65e13533cf1df9fbe976", "target_id": "user:65d47ab043c6a15f5393",
-        const userProfiles = await db.listDocuments(process.env.APPWRITE_DATABASE_ID!, "profile",[Query.equal("$id", followerIds.results.map((x: {
+        const userProfiles: Models.DocumentList<Models.Document> = await db.listDocuments(process.env.APPWRITE_DATABASE_ID!, "profile",[Query.equal("$id", followerIds.results.map((x: {
           created_at: string;
           feed_id: string;
           target_id: string;
           updated_at: string;
         }) => x["feed_id"].replace("timeline:", "") ))]);        
-        return res.json(userProfiles);
+        return res.json(userProfiles.documents);
       }else if(operation === "following"){
         const profileId = jsonPayload.profileId;
         if(!profileId)throw new Error("No profileId in request body")
@@ -169,13 +169,13 @@ export default async ({ req, res, log, error }: Context) => {
         if(followerIds.results.length === 0)return res.json([]);
         const db = new Databases(client);
         // eg: "feed_id": "timeline:65e13533cf1df9fbe976", "target_id": "user:65d47ab043c6a15f5393",
-        const userProfiles = await db.listDocuments(process.env.APPWRITE_DATABASE_ID!, "profile",[Query.equal("$id", followerIds.results.map((x: {
+        const userProfiles: Models.DocumentList<Models.Document> = await db.listDocuments(process.env.APPWRITE_DATABASE_ID!, "profile",[Query.equal("$id", followerIds.results.map((x: {
           created_at: string;
           feed_id: string;
           target_id: string;
           updated_at: string;
         }) => x["feed_id"].replace("timeline:", "") ))]);
-        return res.json(userProfiles);
+        return res.json(userProfiles.documents);
       }else{
         throw new Error(`Unknown operation: ${operation}`)
       }
