@@ -113,7 +113,7 @@ export default async ({ req, res, log, error }: Context) => {
             id: userId,
           }, 
           verb: 'follow', 
-          object: `${profileId}`, 
+          object: `user:${profileId}`, 
           time: new Date().toISOString()
         }; 
         const activityResponse = await notification.addActivity(activityData as any);
