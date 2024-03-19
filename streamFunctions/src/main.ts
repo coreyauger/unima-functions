@@ -174,7 +174,7 @@ export default async ({ req, res, log, error }: Context) => {
           feed_id: string;
           target_id: string;
           updated_at: string;
-        }) => x["feed_id"].replace("timeline:", "") ))]);
+        }) => x["target_id"].replace("user:", "") ))]);
         return res.json(userProfiles.documents);
       }else{
         throw new Error(`Unknown operation: ${operation}`)
