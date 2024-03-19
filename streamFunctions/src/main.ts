@@ -100,7 +100,7 @@ export default async ({ req, res, log, error }: Context) => {
         const ret = await feed.follow("user", profileId);
         // send a notificaiton
         const notification = streamClient.feed('notification', profileId) 
-        const activityData = {'actor': `user:${userId}`, 'verb': 'follow', 'object': `user:${profileId}`, 'time': new Date().toISOString()} 
+        const activityData = {'actor': `${userId}`, 'verb': 'follow', 'object': `${profileId}`, 'time': new Date().toISOString()} 
         const activityResponse = await notification.addActivity(activityData);
         log("notification response: " + JSON.stringify(activityResponse));
         return res.json({
