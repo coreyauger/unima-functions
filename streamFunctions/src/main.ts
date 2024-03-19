@@ -50,9 +50,9 @@ export default async ({ req, res, log, error }: Context) => {
       log(`got userId: ${userId}`); 
 
       const client = new Client()
-          .setEndpoint('https://cloud.appwrite.io/v1')
-          .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
-          .setKey(process.env.APPWRITE_API_KEY!);
+        .setEndpoint('https://cloud.appwrite.io/v1')
+        .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+        .setKey(process.env.APPWRITE_API_KEY!);
 
       const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       if(operation === "token"){
@@ -105,23 +105,13 @@ export default async ({ req, res, log, error }: Context) => {
         const ret = await feed.follow("user", profileId);
         // send a notificaiton
         const notification = streamClient.feed('notification', profileId);
+        const streamUser = streamClient.user(userId);
         const db = new Databases(client);
-        const profile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+        const followProfile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
           "profile",
-          userId
-          );
-        const activityData = {
-            "actor": {
-                "data": {
-                    ...profile
-                },
-                "id": userId,             
-            },         
-            "object": profileId,
-            "time": new Date().toISOString(),
-            "verb": "follow"
-        }
-        const activityResponse = await notification.addActivity(activityData as any);
+          profileId);
+        const activityData = {actor: streamUser, verb: 'follow', object: `${profileId}`, time: new Date().toISOString(), extra_data: followProfile} 
+        const activityResponse = await notification.addActivity(activityData);
         log("notification response: " + JSON.stringify(activityResponse));
         return res.json({
           ret
