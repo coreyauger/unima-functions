@@ -129,6 +129,48 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json({
           ret
         });
+      }else if(operation === "followStats"){
+        const profileId = jsonPayload.profileId;
+        if(!profileId)throw new Error("No profileId in request body")
+        const feed = streamClient.feed('user', profileId);
+        const followerStates = await feed.followStats();
+		    const timeline = streamClient.feed('timeline', profileId);
+        const followingStates = await timeline.followStats();
+        console.log('followStates', {followerStates, followingStates});
+        return res.json({
+          followers: followerStates.results.followers.count,
+          following: followingStates.results.following.count,
+        });
+      }else if(operation === "followers"){
+        const profileId = jsonPayload.profileId;
+        if(!profileId)throw new Error("No profileId in request body")
+        const offset = jsonPayload.offset ?? 0;
+        // List followers
+        const followerIds = await streamClient.feed('user', profileId).following({limit: 25, offset});
+        const db = new Databases(client);
+        // eg: "feed_id": "timeline:65e13533cf1df9fbe976", "target_id": "user:65d47ab043c6a15f5393",
+        const userProfiles = await db.listDocuments(process.env.APPWRITE_DATABASE_ID!, "profile",[Query.equal("$id", followerIds.results.map((x: {
+          created_at: string;
+          feed_id: string;
+          target_id: string;
+          updated_at: string;
+        }) => x["feed_id"].replace("timeline:", "") ))]);
+        return res.json(userProfiles);
+      }else if(operation === "following"){
+        const profileId = jsonPayload.profileId;
+        if(!profileId)throw new Error("No profileId in request body")
+        const offset = jsonPayload.offset ?? 0;
+        // List followers
+        const followerIds = await streamClient.feed('timeline', profileId).following({limit: 25, offset});
+        const db = new Databases(client);
+        // eg: "feed_id": "timeline:65e13533cf1df9fbe976", "target_id": "user:65d47ab043c6a15f5393",
+        const userProfiles = await db.listDocuments(process.env.APPWRITE_DATABASE_ID!, "profile",[Query.equal("$id", followerIds.results.map((x: {
+          created_at: string;
+          feed_id: string;
+          target_id: string;
+          updated_at: string;
+        }) => x["feed_id"].replace("timeline:", "") ))]);
+        return res.json(userProfiles);
       }else{
         throw new Error(`Unknown operation: ${operation}`)
       }
