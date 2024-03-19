@@ -142,13 +142,12 @@ export default async ({ req, res, log, error }: Context) => {
           followers: followerStates.results.followers.count,
           following: followingStates.results.following.count,
         });
-      }else if(operation === "followers"){
-        
+      }else if(operation === "followers"){        
         const profileId = jsonPayload.profileId;
         if(!profileId)throw new Error("No profileId in request body")
         const offset = jsonPayload.offset ?? 0;
         // List followers
-        const followerIds = await streamClient.feed('user', profileId).following({limit: 25, offset});
+        const followerIds = await streamClient.feed('user', profileId).followers({limit: 25, offset});
         log("followers ids: " + JSON.stringify(followerIds));
         if(followerIds.results.length === 0)return res.json([]);
         const db = new Databases(client);
