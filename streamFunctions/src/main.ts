@@ -49,6 +49,11 @@ export default async ({ req, res, log, error }: Context) => {
       if(!userId)throw new Error("No user found from JWT token");
       log(`got userId: ${userId}`); 
 
+      const client = new Client()
+          .setEndpoint('https://cloud.appwrite.io/v1')
+          .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
+          .setKey(process.env.APPWRITE_API_KEY!);
+
       const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
       if(operation === "token"){
         const programId = jsonPayload.programId;
@@ -99,9 +104,24 @@ export default async ({ req, res, log, error }: Context) => {
         const feed = streamClient.feed('timeline', userId);
         const ret = await feed.follow("user", profileId);
         // send a notificaiton
-        const notification = streamClient.feed('notification', profileId) 
-        const activityData = {'actor': `${userId}`, 'verb': 'follow', 'object': `${profileId}`, 'time': new Date().toISOString()} 
-        const activityResponse = await notification.addActivity(activityData);
+        const notification = streamClient.feed('notification', profileId);
+        const db = new Databases(client);
+        const profile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+          "profile",
+          userId
+          );
+        const activityData = {
+            "actor": {
+                "data": {
+                    ...profile
+                },
+                "id": userId,             
+            },         
+            "object": profileId,
+            "time": new Date().toISOString(),
+            "verb": "follow"
+        }
+        const activityResponse = await notification.addActivity(activityData as any);
         log("notification response: " + JSON.stringify(activityResponse));
         return res.json({
           ret
