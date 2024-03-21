@@ -135,7 +135,7 @@ export default async ({ req, res, log, error }: Context) => {
             );
           });
           log("fileResonse: " + JSON.stringify(fileResonse));
-          const sessionReady: any = await db.updateDocument(
+          await db.updateDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "session",
             session.$id,
@@ -146,12 +146,18 @@ export default async ({ req, res, log, error }: Context) => {
           );
           log("thumbnail updated");
 
+          const sessionReady: any = db.getDocument(
+            process.env.APPWRITE_DATABASE_ID!,
+            "session",
+            session.$id);
+
           const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
           // post the new session to the group feed.
           const programFeed = streamClient.feed('user', sessionReady.programKey );
           // Create an activity object
           const activity = { actor: `SU:${sessionReady.programKey }`, verb: 'created', object: `Session:${sessionReady.$id}`, foreign_id:sessionReady.$id, time: sessionReady.$createdAt, extra_data: sessionReady };
           // Add an activity to the feed
+          log("adding activity to program feed: " + JSON.stringify(activity))
           await programFeed.addActivity(activity);
 
           // DONE!!
