@@ -101,12 +101,7 @@ export default async ({ req, res, log, error }: Context) => {
           }
           log(`session: ${JSON.stringify(created)}`);
 
-          // post the new session to the group feed.
-          const programFeed = streamClient.feed('user', program.$id );
-          // Create an activity object
-          const activity = { actor: `SU:${program.$id}`, verb: 'created', object: `Session:${created.$id}`, foreign_id:created.$id, time: created.$createdAt, extra_data: created };
-          // Add an activity to the feed
-          await programFeed.addActivity(activity);
+          // NOTE: we create a post for this session creation in the bunnyWebhook when the session has finished encoding          
 
           // instructors get notification for comments
           (created as any).instructors.map(async (id: string) => {
