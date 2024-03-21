@@ -135,7 +135,7 @@ export default async ({ req, res, log, error }: Context) => {
             );
           });
           log("fileResonse: " + JSON.stringify(fileResonse));
-          await db.updateDocument(
+          const sessionReady: any = await db.updateDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "session",
             session.$id,
@@ -145,11 +145,6 @@ export default async ({ req, res, log, error }: Context) => {
             }
           );
           log("thumbnail updated");
-
-          const sessionReady: any = db.getDocument(
-            process.env.APPWRITE_DATABASE_ID!,
-            "session",
-            session.$id);
 
           const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
           // post the new session to the group feed.
