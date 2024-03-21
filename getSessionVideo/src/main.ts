@@ -82,7 +82,8 @@ export default async ({ req, res, log, error }: Context) => {
             AccessKey: process.env.BUNNY_API_KEY!
           },
           body: JSON.stringify({
-            title
+            title,
+            collectionId: programId
           })
         };
         const video = await fetch(url, options).then(res => res.json());
