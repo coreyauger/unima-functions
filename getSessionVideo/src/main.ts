@@ -76,7 +76,6 @@ export default async ({ req, res, log, error }: Context) => {
         }));
         // create the video
         const url = `https://video.bunnycdn.com/library/${libraryId}/videos`;
-        log(process.env.BUNNY_API_KEY!);
         const options: RequestInit = {
           method: 'POST',
           headers: {
@@ -86,19 +85,27 @@ export default async ({ req, res, log, error }: Context) => {
           },
           body: JSON.stringify({
             title,
+           // collectionId: programId  (THIS IS CAUSING A SERVER ERROR ON BUNNY)
+          })
+        };
+        const video = await fetch(url, options).then(res => res.json());
+        log(`Created video: ${JSON.stringify(video)}`);
+
+
+        // Update the video with the collection id
+        const url2 = `https://video.bunnycdn.com/library/${libraryId}/videos/${video.guid}`;
+        const options2: RequestInit = {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/*+json',
+            AccessKey: process.env.BUNNY_API_KEY!
+          },
+          body: JSON.stringify({
             collectionId: programId
           })
         };
-        const video = await fetch(url, options).then(async res => {
-          log("video response: " + res.statusText);
-          const text = await res.text();
-          log("video response: " + text);
-          return res.json()
-        }).catch(err => {
-          error('error:' + err);
-          throw err;
-        });
-        log(`Created video: ${JSON.stringify(video)}`);
+        await fetch(url2, options2).then(res => res.json());
 
         // Pass back the secure upload link
         // UNIX timestamp when the vidoe link will expire (default to 1 day)
