@@ -74,7 +74,7 @@ export default async ({ req, res, log, error }: Context) => {
         // instructors get notification for comments
         (doc as any).instructors.map(async (id: string) => {
           const userNotification = await streamClient.feed("notification", id);
-          await userNotification.follow("comments", session?.$id);
+          await userNotification.follow("comment", session?.$id);
         });
         return res.json(doc);               
       } else {        
@@ -111,7 +111,7 @@ export default async ({ req, res, log, error }: Context) => {
           // instructors get notification for comments
           (created as any).instructors.map(async (id: string) => {
             const userNotification = await streamClient.feed("notification", id);
-            await userNotification.follow("comments", created.$id);
+            await userNotification.follow("comment", created.$id);
           });
 
           return created;

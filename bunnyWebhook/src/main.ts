@@ -1,6 +1,6 @@
 import { Client, Account, Databases, Query, Permission, Role, Users, Storage, ID, Models, InputFile } from 'node-appwrite';
 import { createHash } from 'node:crypto';
-import { Readable } from 'node:stream';
+import { connect } from 'getstream';
 
 function sha256(content: string) {  
   return createHash('sha256').update(content).digest('hex')
@@ -60,6 +60,9 @@ export default async ({ req, res, log, error }: Context) => {
     'APPWRITE_DATABASE_ID',
     'BUNNY_API_KEY',
     'BUNNY_STREAM_API_KEY',
+    'STREAM_API_KEY',
+    'STREAM_API_SECRET',
+    'STREAM_APP_ID',
   ]);
     try{     
       log(req.body);
@@ -132,7 +135,7 @@ export default async ({ req, res, log, error }: Context) => {
             );
           });
           log("fileResonse: " + JSON.stringify(fileResonse));
-          await db.updateDocument(
+          const sessionReady: any = await db.updateDocument(
             process.env.APPWRITE_DATABASE_ID!,
             "session",
             session.$id,
@@ -142,6 +145,17 @@ export default async ({ req, res, log, error }: Context) => {
             }
           );
           log("thumbnail updated");
+
+          const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
+          // post the new session to the group feed.
+          const programFeed = streamClient.feed('user', sessionReady.programKey );
+          // Create an activity object
+          const activity = { actor: `SU:${sessionReady.programKey }`, verb: 'created', object: `Session:${sessionReady.$id}`, foreign_id:sessionReady.$id, time: sessionReady.$createdAt, extra_data: sessionReady };
+          // Add an activity to the feed
+          await programFeed.addActivity(activity);
+
+          // DONE!!
+          log("session added to program feed.");
         }
       log("done.")        
       }else{
