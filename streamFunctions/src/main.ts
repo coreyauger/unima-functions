@@ -176,6 +176,29 @@ export default async ({ req, res, log, error }: Context) => {
           updated_at: string;
         }) => x["target_id"].replace("user:", "") ))]);
         return res.json(userProfiles.documents);
+      }else if(operation === "notification"){
+        const profileId = jsonPayload.profileId;
+        if(!profileId)throw new Error("No profileId in request body");
+        const verb = jsonPayload.verb;
+        if(!profileId)throw new Error("No verb in request body");
+        const activity = jsonPayload.activity        
+        if(!activity)throw new Error("No activity in request body");
+        log("create notification for '"+verb+"' attaching activity: " + JSON.stringify(activity) );
+        const notificationFeed = streamClient.feed("notification", profileId);
+        const db = new Databases(client);
+        const userProfile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!, "profile",userId);
+        const activityData = {
+          actor: {
+            data: userProfile,
+            id: userId,
+          }, 
+          verb: verb, 
+          object: activity, 
+          time: new Date().toISOString()
+        }; 
+        const activityResponse = await notificationFeed.addActivity(activityData as any);
+        log("notification response: " + JSON.stringify(activityResponse));
+        return res.json(activityResponse);
       }else{
         throw new Error(`Unknown operation: ${operation}`)
       }
