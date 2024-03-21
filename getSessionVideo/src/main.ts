@@ -89,7 +89,10 @@ export default async ({ req, res, log, error }: Context) => {
             collectionId: programId
           })
         };
-        const video = await fetch(url, options).then(res => res.json()).catch(err => {
+        const video = await fetch(url, options).then(async res => {
+          log("video response: " + await res.text())
+          return res.json()
+        }).catch(err => {
           error('error:' + err);
           throw err;
         });
