@@ -191,7 +191,7 @@ export default async ({ req, res, log, error }: Context) => {
         const activityData = {
           actor: `user:${userId}`, 
           verb: verb, 
-          object: activity,
+          object: activity.id,
           user: {
             data: userProfile,
             id: userId,
