@@ -108,6 +108,7 @@ export default async ({ req, res, log, error }: Context) => {
         const notification = streamClient.feed('notification', profileId);
         const db = new Databases(client);
         const userProfile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!, "profile",userId);
+        const profile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!, "profile",profileId);
         const activityData = {
           actor: `user:${userId}`, 
           user: {
@@ -115,7 +116,8 @@ export default async ({ req, res, log, error }: Context) => {
             id: userId,
           },
           verb: 'follow', 
-          object: `user:${profileId}`, 
+          object: `user:${profileId}`,
+          profile,
           time: new Date().toISOString()
         }; 
         const activityResponse = await notification.addActivity(activityData as any);
