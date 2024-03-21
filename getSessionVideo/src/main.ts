@@ -86,7 +86,10 @@ export default async ({ req, res, log, error }: Context) => {
             collectionId: programId
           })
         };
-        const video = await fetch(url, options).then(res => res.json());
+        const video = await fetch(url, options).then(res => res.json()).catch(err => {
+          error('error:' + err);
+          throw err;
+        });
         log(`Created video: ${JSON.stringify(video)}`);
 
         // Pass back the secure upload link
