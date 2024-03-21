@@ -91,22 +91,6 @@ export default async ({ req, res, log, error }: Context) => {
         const video = await fetch(url, options).then(res => res.json());
         log(`Created video: ${JSON.stringify(video)}`);
 
-
-        // Update the video with the collection id
-        const url2 = `https://video.bunnycdn.com/library/${libraryId}/videos/${video.guid}`;
-        const options2: RequestInit = {
-          method: 'POST',
-          headers: {
-            accept: 'application/json',
-            'content-type': 'application/*+json',
-            AccessKey: process.env.BUNNY_API_KEY!
-          },
-          body: JSON.stringify({
-            collectionId: programId
-          })
-        };
-        await fetch(url2, options2).then(res => res.json());
-
         // Pass back the secure upload link
         // UNIX timestamp when the vidoe link will expire (default to 1 day)
         const timestamp = Math.round( (Date.now() + (24 * 60 * 60 * 1000)) / 1000 );  // UNIX POSIX is in seconds not ms.
