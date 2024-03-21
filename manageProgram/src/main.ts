@@ -175,6 +175,8 @@ export default async ({ req, res, log, error }: Context) => {
                   instructorTimeline.follow("user", profile.$id);
                   const instructorNotification = streamClient.feed('notification', uid);
                   instructorNotification.follow("user", program?.$id);
+                  // get notified of session results
+                  instructorNotification.follow("program_activity",program?.$id);
                   if(update.organizationKey){
                     instructorTimeline.follow("user", update.organizationKey);
                     instructorNotification.follow("user", update.organizationKey);

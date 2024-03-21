@@ -103,7 +103,7 @@ export default async ({ req, res, log, error }: Context) => {
 
           // NOTE: we create a post for this session creation in the bunnyWebhook when the session has finished encoding          
 
-          // instructors get notification for comments
+          // instructors get notification for comments and session results
           (created as any).instructors.map(async (id: string) => {
             const userNotification = await streamClient.feed("notification", id);
             await userNotification.follow("comment", created.$id);
