@@ -70,7 +70,10 @@ export default async ({ req, res, log, error }: Context) => {
         const instructor = (program as any).instructor.profile as [];
         if(!instructor.find( (p: any) => p.$id === userId))throw new Error(`User: ${userId} is not an instructor for this program`);
 
-        log("About to create video");
+        log("About to create video: " + JSON.stringify({
+          title,
+          collectionId: programId
+        }));
         // create the video
         const url = `https://video.bunnycdn.com/library/${libraryId}/videos`;
         log(process.env.BUNNY_API_KEY!);
