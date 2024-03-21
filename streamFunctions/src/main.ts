@@ -109,10 +109,11 @@ export default async ({ req, res, log, error }: Context) => {
         const db = new Databases(client);
         const userProfile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!, "profile",userId);
         const activityData = {
-          actor: {
+          actor: `user:${userId}`, 
+          user: {
             data: userProfile,
             id: userId,
-          }, 
+          },
           verb: 'follow', 
           object: `user:${profileId}`, 
           time: new Date().toISOString()
@@ -188,12 +189,14 @@ export default async ({ req, res, log, error }: Context) => {
         const db = new Databases(client);
         const userProfile = await db.getDocument(process.env.APPWRITE_DATABASE_ID!, "profile",userId);
         const activityData = {
-          actor: {
+          actor: `user:${userId}`, 
+          verb: verb, 
+          object: activity,
+          user: {
             data: userProfile,
             id: userId,
-          }, 
-          verb: verb, 
-          object: activity, 
+          },          
+          activity,
           time: new Date().toISOString()
         }; 
         const activityResponse = await notificationFeed.addActivity(activityData as any);
