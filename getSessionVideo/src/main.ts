@@ -75,7 +75,7 @@ export default async ({ req, res, log, error }: Context) => {
           collectionId: programId
         }));      
         
-        const collectionUrl = `https://video.bunnycdn.com/library/${libraryId}/collections?search=${search}`;
+        const collectionUrl = `https://video.bunnycdn.com/library/${libraryId}/collections?search=${programId}`;
         const collectionPptions: RequestInit = {
           method: 'GET',
           headers: {
