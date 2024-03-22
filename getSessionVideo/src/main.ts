@@ -75,17 +75,14 @@ export default async ({ req, res, log, error }: Context) => {
           collectionId: programId
         }));      
         
-        const collectionUrl = `https://video.bunnycdn.com/library/${libraryId}/collections`;
+        const collectionUrl = `https://video.bunnycdn.com/library/${libraryId}/collections?search=${search}`;
         const collectionPptions: RequestInit = {
           method: 'GET',
           headers: {
             accept: 'application/json',
             'content-type': 'application/*+json',
             AccessKey: process.env.BUNNY_API_KEY!
-          },
-          body: JSON.stringify({
-            search: programId,
-          })
+          }       
         };
         const collections = await fetch(collectionUrl, collectionPptions).then(res => res.json()).catch((err) => {
           // don't fail if for some reason we don't find the collection
