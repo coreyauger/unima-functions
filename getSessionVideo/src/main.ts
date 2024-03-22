@@ -73,7 +73,27 @@ export default async ({ req, res, log, error }: Context) => {
         log("About to create video: " + JSON.stringify({
           title,
           collectionId: programId
-        }));
+        }));      
+        
+        const collectionUrl = `https://video.bunnycdn.com/library/${libraryId}/collections`;
+        const collectionPptions: RequestInit = {
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/*+json',
+            AccessKey: process.env.BUNNY_API_KEY!
+          },
+          body: JSON.stringify({
+            search: programId,
+          })
+        };
+        const collections = await fetch(collectionUrl, collectionPptions).then(res => res.json()).catch((err) => {
+          // don't fail if for some reason we don't find the collection
+          log("WARNING could not find a video colleciton with name: " + programId);
+        });
+        const collection = collections.items.find((c: any) => c.guid);
+        log("Found video collection: " + JSON.stringify(collection));
+
         // create the video
         const url = `https://video.bunnycdn.com/library/${libraryId}/videos`;
         const options: RequestInit = {
@@ -85,7 +105,7 @@ export default async ({ req, res, log, error }: Context) => {
           },
           body: JSON.stringify({
             title,
-           // collectionId: programId  (THIS IS CAUSING A SERVER ERROR ON BUNNY)
+            collectionId: collection?.guid,
           })
         };
         const video = await fetch(url, options).then(res => res.json());
