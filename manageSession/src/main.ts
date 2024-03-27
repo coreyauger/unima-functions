@@ -69,14 +69,22 @@ export default async ({ req, res, log, error }: Context) => {
         ).catch((r) => undefined);
 
       if(session?.$id){
-        log("update session: " + session?.$id);
-        const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, update);
-        // instructors get notification for comments
-        (doc as any).instructors.map(async (id: string) => {
-          const userNotification = await streamClient.feed("notification", id);
-          await userNotification.follow("comment", session?.$id);
-        });
-        return res.json(doc);               
+        if(req.method === "DELETE"){
+          log("delete session: " + session?.$id);
+          const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, {
+            status: -1  // SET - NOT ACTIVE
+          });         
+          return res.json(doc);
+        }else{
+          log("update session: " + session?.$id);
+          const doc = await db.updateDocument(process.env.APPWRITE_DATABASE_ID!, "session", session?.$id, update);
+          // instructors get notification for comments
+          (doc as any).instructors.map(async (id: string) => {
+            const userNotification = await streamClient.feed("notification", id);
+            await userNotification.follow("comment", session?.$id);
+          });
+          return res.json(doc);
+        }
       } else {        
         const transaction = async () => {         
           log("Create a new session with data: " + JSON.stringify(update));
