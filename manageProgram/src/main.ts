@@ -90,7 +90,8 @@ export default async ({ req, res, log, error }: Context) => {
           "instructor",
           program?.$id,
           {
-            profile: [...instructors, ...instructorsToAdd],
+            profile: update.instructor.profile,   // replace the instructro list
+            //[...instructors, ...instructorsToAdd],
           });
         log(`instructors to add: ${instructorsToAdd.join(",")}`);         
         await Promise.all(instructorsToAdd.map((pid:string) => 
