@@ -128,7 +128,13 @@ export default async ({ req, res, log, error }: Context) => {
           ).catch((r) => db.createDocument(process.env.APPWRITE_DATABASE_ID!,
             "profile_stats",
             userId,
-            {}  // don't fail just create one if we can not find the record.
+            { // don't fail just create one if we can not find the record.
+              totalTimeMs: 0,
+              totalNumSessions: 0,
+              totalMindPoints: 0,
+              totalBodyPoints: 0,
+              totalSoulPoints: 0,
+            }  
           ));
         
         // now update the stat totals...

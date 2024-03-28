@@ -112,7 +112,13 @@ export default async ({ req, res, log, error }: Context) => {
           process.env.APPWRITE_DATABASE_ID!,
           "profile_stats",
           userId,
-          {},   // initialize with default values
+          { // don't fail just create one if we can not find the record.
+            totalTimeMs: 0,
+            totalNumSessions: 0,
+            totalMindPoints: 0,
+            totalBodyPoints: 0,
+            totalSoulPoints: 0,
+          }  
         );
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const user = await streamClient.user(userId).getOrCreate(updatesProfile);
