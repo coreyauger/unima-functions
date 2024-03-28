@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Permission, ID, Role, Teams } from 'node-appwrite';
+import { Client, Account, Databases, Permission, ID, Role, Teams, Models } from 'node-appwrite';
 import { connect } from 'getstream';
 import { Context, throwIfMissing } from './libs/FunctUtils.js';
 
@@ -76,6 +76,14 @@ export default async ({ req, res, log, error }: Context) => {
         return res.json(doc);               
       } else {        
         log("Create a new organization profile with data: " + JSON.stringify(update.profile));
+        // ** NOTE ***
+        // FOR NOW - we only allow admin to create an organization.
+        const teams = new Teams(userClient);
+        const memberships: Models.TeamList<Models.Preferences> = await teams.list();
+        log("checking if caller is an admin");
+        if(!memberships.teams.find((t: Models.Team<Models.Preferences>) => t.name === "admin")){
+          throw new Error("You must be an admin to create an organization.");
+        }
         const transaction = async () => {
           const profile = await db.createDocument(
             process.env.APPWRITE_DATABASE_ID!,
