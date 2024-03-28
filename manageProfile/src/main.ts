@@ -108,6 +108,12 @@ export default async ({ req, res, log, error }: Context) => {
           userId,
           updatesUserDetails,
         );
+        await db.createDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          "profile_stats",
+          userId,
+          {},   // initialize with default values
+        );
         const streamClient = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const user = await streamClient.user(userId).getOrCreate(updatesProfile);
         await user.update(updatesProfile);

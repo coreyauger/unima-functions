@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Query, ID, Permission, Role } from 'node-appwrite';
+import { Client, Account, Databases, Query, ID, Permission, Role, Models } from 'node-appwrite';
 import { connect } from 'getstream';
 
 function throwIfMissing(obj: any, keys: string[]): void {
@@ -119,8 +119,30 @@ export default async ({ req, res, log, error }: Context) => {
           "session",
           (sessionResult as any).session.$id, {
             views: ((sessionResult as any).session.views + 1),
-          });    
-        log("sessionResult: " + JSON.stringify(sessionResult));        
+          });              
+        log("sessionResult: " + JSON.stringify(sessionResult));
+        // - update the profile stats
+        const profileStats: Models.Document = await db.getDocument(process.env.APPWRITE_DATABASE_ID!,
+          "profile_stats",
+          userId
+          ).catch((r) => db.createDocument(process.env.APPWRITE_DATABASE_ID!,
+            "profile_stats",
+            userId,
+            {}  // don't fail just create one if we can not find the record.
+          ));
+        
+        // now update the stat totals...
+        const [mindPoints, bodyPoints, soulPoints] = (document as any).session.mbsPoints.length === 3 ? (document as any).session.mbsPoints : [0,0,0];
+        db.updateDocument(process.env.APPWRITE_DATABASE_ID!,
+          "profile_stats",
+          userId,
+          {
+            totalTimeMs: (profileStats as any).totalTimeMs + (document as any).session.totalLengthMs,
+            totalNumSessions: (profileStats as any).totalNumSessions + 1,
+            totalMindPoints: (profileStats as any).totalMindPoints + mindPoints,
+            totalBodyPoints: (profileStats as any).totalBodyPoints + bodyPoints,
+            totalSoulPoints: (profileStats as any).totalSoulPoints + soulPoints,
+          });      
         // - Also post the result to the sessions timeline
         const client = connect(process.env.STREAM_API_KEY!, process.env.STREAM_API_SECRET!, process.env.STREAM_APP_ID!);
         const sessionFeed = client.feed('session_activity', (sessionResult as any).sessionKey );
